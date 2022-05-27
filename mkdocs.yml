@@ -1,0 +1,62 @@
+site_name: linxz.tech
+
+theme:
+  name: material
+  logo: assets/logo.jpg
+  icon:
+    repo: fontawesome/brands/github-alt
+  font:
+    text: JetBrains Mono
+  features:
+    - header.autohide
+    - search.suggest
+    - search.highlight
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.top
+    - content.code.annotate
+  palette:
+    scheme: slate
+    primary: black
+    accent: green
+
+plugins:
+  - search
+  - tags:
+      tags_file: tags.md
+
+markdown_extensions:
+  - meta
+  - toc:
+      toc_depth: 6
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - footnotes
+  - abbr
+
+extra:
+  social:
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/linxzsec
+    - icon: fontawesome/brands/github
+      link: https://github.com/linxzsec
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.com/linxzsec
+    - icon: fontawesome/brands/keybase
+      link: https://keybase.io/linxz
+
+extra_css:
+  - stylesheets/extra.css
