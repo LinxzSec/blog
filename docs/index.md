@@ -10,7 +10,7 @@ hide:
     I write about things I am trying to learn, or things I know which interest me. 'To teach is to learn twice.' - Joseph Joubert 
 
 <figure markdown>
-![Mia Khalifa](/assets/logo.jpg)
+![Mia Khalifa](/docs/assets/logo.jpg)
 <figcaption>Yes, that is Mia Khalifa.</figcaption>
 </figure>
 
