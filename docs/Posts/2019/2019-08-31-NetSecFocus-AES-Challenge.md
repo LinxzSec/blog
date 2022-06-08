@@ -6,16 +6,17 @@ hide:
     - navigation
 ---
 
+## Introduction
+
 Tunny from NetSecFocus released a CTF challenge in order to win a ticket for BSides Cymru, as the chalelnge was cryptography related I decided to give it a go, a link to the challenge can be found [here](https://github.com/NetSec-Focus/bsides-cymru-ctf)
 
 # Enumeration
 
 First, we need to work out what the challenge entails, we are told we need to decrypt two binary files and let NSF know what they say. We are also given a bash script of how the files were encrypted, let's take a look.
 
-```
+```bash
 #!/bin/bash
 
-: '
 usage ./cyfuno.sh file file
 
 #tidy up files - work on this later
@@ -42,7 +43,7 @@ openssl enc -AES-128-CTR -S "$iv1" -pass "pass:$pass1" -in "$1" -out "$1.enc"
 openssl enc -AES-128-CTR -S "$iv1" -pass "pass:$pass1" -in "$2" -out "$2.enc"
 ```
 
-The script passes two files, then some interesting "file tidy up" takes place. From here, the script genreates two passwords of 16 byte length using the `rand` function in OpenSSL and outputs them in Base64 format. Then we use `rand` again to generate two IVs of 8 byte length in hex format. If we analyse this, we should first recognise that an 8 byte IV is not correct. It should be 16 bytes to match the block size.
+The script passes two files, then some interesting "file tidy up" takes place. From here, the script genreates two passwords of 16 byte length using the `rand()` function in OpenSSL and outputs them in Base64 format. Then we use `rand()` again to generate two IVs of 8 byte length in hex format. If we analyse this, we should first recognise that an 8 byte IV is not correct. It should be 16 bytes to match the block size.
 
 Next, we see that the files we provide are encrypted using AES-128 in Counter mode, taking the IV we generated and using it as a salt for the password that we generated and then outputs the encrypted file. If you look closely we see a major problem; both files reu-use the IV & the passwod! When using AES in CTR mode you should **never** reuse the IV or the key!
 

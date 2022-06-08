@@ -1,0 +1,5 @@
+# new.linxz.tech
+
+This is my new and revamped blog made using Material for MkDocs. I grew frustrated with the readability of my technical content via Hugo and so I decided to do something about it. Although Material for MkDocs is not a blogging engine, I do believe it provides the best in class features in terms of writing technical documentation. I may not be writing technical documentation but we can leverage a great deal of Material for MkDocs' features to make this blog A. better and B. easier to consume the very technical content. If you'd still like to visit my old blog for the while it is available just at linxz.tech however, I don't expect it to stay up for much longer. 
+
+You might also notice that not all of the posts on the old blog are here... The simple reason for that is that I think a lot of the posts on my old blog are frankly just pointless. I posted those when I was in the world of pen-testing, none of them really add any value so they're gone. I've only ported posts which I think people can genuinely learn something from.

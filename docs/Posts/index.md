@@ -6,3 +6,4 @@ title: Latest Posts
 
 - [HEVD 3 - Double Fetch](/posts/2022/2022-05-21-HEVD3-DoubleFetch/)
 - [HEVD 3 - Stack Overflow + SMEP Bypass](/posts/2022/2022-05-14-HEVD3-StackOverflow)
+- [Pwn2Own 2017 Guest-to-Host Escape](/posts/2021/2021-11-13-Pwn2Own-2017-Guest-Host-Escape)
