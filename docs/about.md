@@ -16,6 +16,21 @@ If you'd like to contact me you can find my links below and at the bottom of the
 - [:fontawesome-brands-keybase: Linxz](https://keybase.io/linxz)
 - [:heart_eyes:](/assets/mia.gif)
 
+I'm also a massive keyboard nerd. Currently I own two custom keyboards. I also own an absolute mountain of deskmats...
+
+1. **GMMK Pro**
+    + Alu plate
+    + Alpaca Silent Linears
+    + Durock Screw-in V2 Alpaca Stabs
+    + ePBT White and Grey
+
+2. **Tofu 60**
+    + Brass plate
+    + NK Creams
+    + Durock Smoke Stabs
+    + GMK BoW
+
+
 ???+ note
     If you're wondering why I've moved the blog to a new site generator the reason is that I no longer felt Hugo was sufficient for maintaining the level of quality & readability I want to achieve in my posts.
 
