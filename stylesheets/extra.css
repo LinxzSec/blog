@@ -1,0 +1,135 @@
+:root > * {
+    
+    --md-default-fg-color: #ffffff;
+    --md-default-fg-color--light: #ffffff;
+    --md-default-bg-color: #0e0e0f;
+
+    --md-primary-fg-color: #FFFFFF;
+    --md-primary-fg-color--light: #FFFFFF;
+    --md-primary-fg-color--dark: #ffffff;
+    --md-primary-bg-color: #0e0e0f;
+
+    --md-accent-fg-color: #b5e853;
+    --md-accent-bg-color: #b5e853;
+
+    --md-typeset-a-color: #ffffff;
+
+
+    /* Footer Colors */
+    --md-footer-fg-color: #b5e853;
+    --md-footer-bg-color: #0e0e0f;
+    --md-footer-bg-color--dark: #111113;
+}
+
+.md-grid {
+    max-width: 1440px;
+}
+
+.md-content {
+    max-width: 1440px;
+}
+
+.md-ellipsis {
+    color:#ffffff;
+}
+
+.md-typeset {
+    font-size: 14px;
+}
+
+[data-md-color-primary=black] .md-header {
+    background-color:#111113
+}
+
+[data-md-color-primary=black] .md-tabs {
+    background-color:#111113;
+    color: #ffffff;
+}
+
+.md-tabs__link {
+    opacity: 1;
+    color: #b5e853;
+}
+
+/* TOC Navigation */
+.mad-nav__title {
+    font-size: 16px;
+    color:#b5e853;
+}
+
+.md-nav__link {
+    font-size: 15px;
+}
+
+.md-nav__item .md-nav__link--active {
+    color: #b5e853;
+}
+
+.md-typeset h1 {
+    color: #b5e853;
+    font-weight: 550;
+}
+
+.md-typeset h2 {
+    color: #b5e853;
+    font-weight: 450;
+}
+
+.md-typeset a {
+    color: #b5e853;
+}
+
+.md-typeset a:focus, .md-typeset a:hover {
+    color: #ffffff;
+}
+
+.md-tag[href] {
+    color: #b5e853;
+}
+
+.md-tag[href]:focus, .md-tag[href]:hover {
+    color: #ffffff;
+    background-color: var(--md-default-fg-color--lightest);
+}
+
+.md-source {
+    color: #FFFFFF;
+}
+
+.md-typeset code {
+    color: #ffffff;
+}
+
+.md-search__icon.md-icon {
+    color: #b5e853
+}
+
+.md-search__input {
+    color:#b5e853;
+}
+
+.md-search-result__more summary {
+    color:#b5e853;
+}
+
+.md-typeset .md-button {
+    background-color: #b5e853;
+    border-color: #b5e853
+}
+
+
+.md-typeset .md-button:is(:focus, :hover) {
+    color:#0e0e0f;
+    background-color: #ffffff;
+    border-color: #ffffff;
+}
+
+.md-top:is(:focus, :hover) {
+    color:#0e0e0f;
+    background-color: #b5e853;
+    border-color: #b5e853;
+}
+
+.md-nav__title {
+    color: #b5e853;
+}
